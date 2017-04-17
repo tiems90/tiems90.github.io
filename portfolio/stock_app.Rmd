@@ -1,0 +1,40 @@
+---
+title: "Shiny Stock App"
+author: 'Timo'
+imgage: 'img/portfolio/stocks.jpg'
+date: 4/17/2017
+description: 'A friend of mine had been looking around for an extension to let him download historic stock data. Now, these extensions in Excel tend to use macros and break often, so I figured this would be a nice opportunity to learn all about Shiny in R and make him an application. '
+---
+Now, a friend of mine had been looking around for an extension to let him download historic stock data. Now, these extensions in Excel tend to use macros and break often, so I figured this would be a nice opportunity to learn all about Shiny in R and make him an application.
+
+The [link](https://tiems.shinyapps.io/josep/) to the final application can be found here. The actual R code it uses is quite simplistic. It amounts to the following, where all inputs have been replaced by --:
+
+```{r eval=FALSE}
+library(shiny)
+library(tseries)
+library(lubridate)
+library(tibble)
+library(dygraphs)
+library(magrittr)
+
+data <- get.hist.quote(instrument = --, 
+                             start = --, end= --, quote = --, 
+                             provider = "yahoo", compression = "d" )
+data <- rownames_to_column(as.data.frame(data), 'Date')
+
+data %>%
+      dygraph(main='Value rebased at 100') %>% 
+      dyRangeSelector() %>% 
+      dyRebase(value = 100)
+
+write.csv(data)
+```
+
+Of course, since this version does not require any interaction, and takes as input only a single stock, the full application is a bit more complicated. Some interesting things I ran into:
+
+* Implementing user-friendly selection boxes for the dates.
+* How to deal with tracker symbols, strings, etc. to turn input into a nice and neat vector.
+* For loops to iterate and collect all the data. 
+* A nice new interactive graph.
+
+If you have any new ideas about things I might add, or how to extend its functionality, please let me know in the comments below. 

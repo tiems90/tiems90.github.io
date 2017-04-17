@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Shiny Stock App</title>
+<meta name="description" content="A brief overview of some interesting projects I&#39;ve done in my spare time.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="all,follow">
+<meta name="googlebot" content="index,follow,snippet,archive">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,300,700,400italic">
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/owl.carousel.css">
+<link rel="stylesheet" href="/css/owl.theme.css">
+
+
+  <link href="/css/style.default.css" rel="stylesheet" id="theme-stylesheet">
+
+
+<link href="/css/custom.css" rel="stylesheet">
+<link rel="shortcut icon" href="/img/favicon.png">
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97467280-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body>
+  <div id="all">
+      <div class="container-fluid">
+          <div class="row row-offcanvas row-offcanvas-left">
+              <div id="sidebar" class="col-xs-6 col-sm-4 col-md-3 sidebar-offcanvas">
+  <div class="sidebar-content">
+    <h1 class="sidebar-heading"><a href="/">Data Science Portfolio</a></h1>
+    
+      <p class="sidebar-p">I am a recently graduated Data Scientist.</p>
+    
+      <p class="sidebar-p">Originally from The Netherlands, currently based in Madrid.</p>
+    
+    <ul class="sidebar-menu">
+      
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/about/aboutme">About</a></li>
+      
+        <li><a href="/contact/">Get in touch</a></li>
+      
+    </ul>
+    <p class="social">
+  
+  
+  
+  
+  
+  
+  <a href="https://www.linkedin.com/in/roesttimo/" data-animate-hover="pulse">
+    <i class="fa fa-linkedin"></i>
+  </a>
+  
+  
+  
+</p>
+
+
+    <div class="copyright">
+      <p class="credit">
+        
+          &copy;2016 Timo Roest
+        
+        
+      </p>
+    </div>
+  </div>
+</div>
+
+              
+<div class="col-xs-12 col-sm-8 col-md-9 content-column white-background">
+  <div class="small-navbar visible-xs">
+  <button type="button" data-toggle="offcanvas" class="btn btn-ghost pull-left"> <i class="fa fa-align-left"> </i>Menu</button>
+  <h1 class="small-navbar-heading"><a href="/">Data Science Portfolio</a></h1>
+</div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="content-column-content">
+         <h1>Shiny Stock App</h1>
+         <!-- BLOGDOWN-HEAD -->
+<!-- /BLOGDOWN-HEAD -->
+
+<!-- BLOGDOWN-BODY-BEFORE -->
+<!-- /BLOGDOWN-BODY-BEFORE -->
+<p>Now, a friend of mine had been looking around for an extension to let him download historic stock data. Now, these extensions in Excel tend to use macros and break often, so I figured this would be a nice opportunity to learn all about Shiny in R and make him an application.</p>
+<p>The <a href="https://tiems.shinyapps.io/josep/">link</a> to the final application can be found here. The actual R code it uses is quite simplistic. It amounts to the following, where all inputs have been replaced by –:</p>
+<pre class="r"><code>library(shiny)
+library(tseries)
+library(lubridate)
+library(tibble)
+library(dygraphs)
+library(magrittr)
+
+data &lt;- get.hist.quote(instrument = --, 
+                             start = --, end= --, quote = --, 
+                             provider = &quot;yahoo&quot;, compression = &quot;d&quot; )
+data &lt;- rownames_to_column(as.data.frame(data), &#39;Date&#39;)
+
+data %&gt;%
+      dygraph(main=&#39;Value rebased at 100&#39;) %&gt;% 
+      dyRangeSelector() %&gt;% 
+      dyRebase(value = 100)
+
+write.csv(data)</code></pre>
+<p>Of course, since this version does not require any interaction, and takes as input only a single stock, the full application is a bit more complicated. Some interesting things I ran into:</p>
+<ul>
+<li>Implementing user-friendly selection boxes for the dates.</li>
+<li>How to deal with tracker symbols, strings, etc. to turn input into a nice and neat vector.</li>
+<li>For loops to iterate and collect all the data.</li>
+<li>A nice new interactive graph.</li>
+</ul>
+<p>If you have any new ideas about things I might add, or how to extend its functionality, please let me know in the comments below.</p>
+
+         <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'data-science-portfolio';
+    var disqus_identifier = '\/portfolio\/stock_app\/';
+    var disqus_title = 'Shiny Stock App';
+    var disqus_url = '\/portfolio\/stock_app\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+          </div>
+      </div>
+  </div>
+  <script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.cookie.js"> </script>
+<script src="/js/ekko-lightbox.js"></script>
+<script src="/js/jquery.scrollTo.min.js"></script>
+<script src="/js/masonry.pkgd.min.js"></script>
+<script src="/js/imagesloaded.pkgd.min.js"></script>
+<script src="/js/owl.carousel.min.js"></script>
+<script src="/js/front.js"></script>
+
+</body>
+</html>

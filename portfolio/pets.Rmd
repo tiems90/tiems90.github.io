@@ -1,0 +1,141 @@
+---
+title: "Pets in Madrid"
+author: "Timo"
+date: 4/15/2017
+image: 'img/portfolio/pets.jpg'
+output:
+  blogdown::html_page:
+    toc: true
+    number_sections: true
+    df_print: paged
+description: 'Since the city of Madrid offers data on registered pets, I figured I would try to have some fun with it and see how much we can find about this data. Time to find out whether Madrid prefers cats or dogs!'
+---
+
+#Intro
+Let's try and get some information on pets in Madrid! Fortunately, they have information freely available on `datos.madrid.es`. This will only be a short analysis and we will try to see if we can find some basic patterns in the data. Let's start by loading our libraries. 
+
+
+```{r Load Libraries, include=FALSE}
+library(readxl)
+library(tidyverse)
+```
+
+
+#Loading and Cleaning
+First we load this data:
+
+```{r Load Data}
+url <- "http://datos.madrid.es/egob/catalogo/207118-0-censo%20animales.xlsx"
+destfile <- "x.xlsx"
+download.file(url, destfile)
+x <- read_excel(destfile, skip = 1)
+```
+
+Then we preform some basic cleaning. It comes with an empty row, so we remove this. Let's also have a look at the data we have. 
+
+```{r}
+x[-22,] -> x
+x
+```
+
+#Cats vs Dogs
+It looks like we only have basic data on how many cats and dogs are within each zone. To check the popularity of each respective choice, let's create a new variable that will be the ratio of dogs to cats. 
+
+```{r}
+pets <- x %>% 
+  mutate(ratio= `ESPECIE CANINA`/`ESPECIE FELINA`) %>% 
+  arrange(ratio)
+```
+
+Now we have an additional column that tells us where we have more dogs relative to cats. The higher the number, the more dogs per cat.
+
+Let's plot this. 
+
+```{r}
+x %>% 
+  mutate(ratio= `ESPECIE CANINA`/`ESPECIE FELINA`) %>% 
+  arrange(ratio) %>%
+  ggplot(
+    aes(x=reorder(DISTRITO, ratio),
+        y=ratio)) +
+  geom_bar(stat='identity') +
+  geom_hline(aes(yintercept=1), colour = 'grey', linetype='dashed') +
+  xlab('District') +
+  ylab('Ratio Dog/Cat') +
+  ggtitle('Dog:Cat ratio per District in Madrid') +
+  coord_flip()
+```
+
+The dotted line indicates an equal ratio of cats an dogs. We see here that there is quite some difference by zone, and that overall there appear to be a lot more dogs than cats. This could indicate a very strong preference for dogs, relative to cats, or that it's easier to get away with not reporting your cat than your dog for tax purposes...
+
+#Demographic Data
+Let's add some demographic data to see if there's any correlation. 
+
+```{r}
+library(readr)
+padron <- read_delim("http://datos.madrid.es/egob/catalogo/200076-1-padron.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+padron
+
+padron$total <- rowSums(padron[,9:12], na.rm = T)
+padron$weight <- padron$COD_EDAD_INT*padron$total
+```
+
+Okay, it seems like we have this data per district, neighbourhoor, and age. Let's aggregate this a bit more.
+
+```{r}
+district <- padron %>% 
+  group_by(district = DESC_DISTRITO) %>% 
+  summarise(
+    spanish_men = sum(EspanolesHombres, na.rm=T),
+    spanish_women = sum(EspanolesMujeres, na.rm=T),
+    spanish = spanish_men + spanish_women,
+    foreign_men = sum(ExtranjerosHombres, na.rm=T),
+    foreign_women = sum(ExtranjerosMujeres, na.rm=T),
+    foreign = foreign_women + foreign_men,
+    avg_age = sum(weight)/sum(total)
+  )
+
+district %>%
+  gather('Statistic', 'Value', -1) %>% 
+  filter(Statistic %in% c('spanish', 'foreign')) %>% 
+  ggplot(aes(x=Statistic, y=Value, fill=Statistic)) +
+  geom_bar(stat = 'identity') +
+  facet_wrap(~district)
+
+
+```
+
+Now we have some interesting data per district. Time to join this with our previous table.
+
+```{r}
+library(fuzzyjoin)
+join <- district %>% 
+  stringdist_full_join(pets, by=c(district = 'DISTRITO'))
+```
+
+This seems to have taken care of the fuzzy merge. But San Blas is being difficult. We will fix this manually. 
+
+```{r}
+join[21, 9:12] <- join[22, 9:12]
+join <- join[-22, names(join)!= 'DISTRITO']
+
+join$ratio_imm <- join$foreign/join$spanish
+```
+
+And we have it complete! Now, can we find a relationship between ratio of dogs to cats and our other variables?
+
+```{r}
+lm1 <- lm(ratio ~ spanish + foreign + avg_age, data = join)
+summary(lm1)
+```
+
+At least in the most basic form this does not appear to be the case. 
+
+```{r}
+lm2 <- lm(ratio ~ ratio_imm + avg_age, data = join[,-c(1, 10, 9)])
+summary(lm2)
+```
+
+And with immigration statistics this remains unclear. 
+

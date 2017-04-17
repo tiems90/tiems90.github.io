@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Madrid - Real-time Traffic</title>
+<meta name="description" content="A brief overview of some interesting projects I&#39;ve done in my spare time.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="all,follow">
+<meta name="googlebot" content="index,follow,snippet,archive">
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,300,700,400italic">
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/owl.carousel.css">
+<link rel="stylesheet" href="/css/owl.theme.css">
+
+
+  <link href="/css/style.default.css" rel="stylesheet" id="theme-stylesheet">
+
+
+<link href="/css/custom.css" rel="stylesheet">
+<link rel="shortcut icon" href="/img/favicon.png">
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-97467280-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+</head>
+<body>
+  <div id="all">
+      <div class="container-fluid">
+          <div class="row row-offcanvas row-offcanvas-left">
+              <div id="sidebar" class="col-xs-6 col-sm-4 col-md-3 sidebar-offcanvas">
+  <div class="sidebar-content">
+    <h1 class="sidebar-heading"><a href="/">Data Science Portfolio</a></h1>
+    
+      <p class="sidebar-p">I am a recently graduated Data Scientist.</p>
+    
+      <p class="sidebar-p">Originally from The Netherlands, currently based in Madrid.</p>
+    
+    <ul class="sidebar-menu">
+      
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/about/aboutme">About</a></li>
+      
+        <li><a href="/contact/">Get in touch</a></li>
+      
+    </ul>
+    <p class="social">
+  
+  
+  
+  
+  
+  
+  <a href="https://www.linkedin.com/in/roesttimo/" data-animate-hover="pulse">
+    <i class="fa fa-linkedin"></i>
+  </a>
+  
+  
+  
+</p>
+
+
+    <div class="copyright">
+      <p class="credit">
+        
+          &copy;2016 Timo Roest
+        
+        
+      </p>
+    </div>
+  </div>
+</div>
+
+              
+<div class="col-xs-12 col-sm-8 col-md-9 content-column white-background">
+  <div class="small-navbar visible-xs">
+  <button type="button" data-toggle="offcanvas" class="btn btn-ghost pull-left"> <i class="fa fa-align-left"> </i>Menu</button>
+  <h1 class="small-navbar-heading"><a href="/">Data Science Portfolio</a></h1>
+</div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="content-column-content">
+         <h1>Madrid - Real-time Traffic</h1>
+         <link href="/rmarkdown-libs/pagedtable/css/pagedtable.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/pagedtable/js/pagedtable.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#load-data"><span class="toc-section-number">1</span> Load Data</a></li>
+<li><a href="#data-cleaning"><span class="toc-section-number">2</span> Data Cleaning</a><ul>
+<li><a href="#georreferencing"><span class="toc-section-number">2.1</span> Georreferencing</a></li>
+<li><a href="#data-cleaning-1"><span class="toc-section-number">2.2</span> Data Cleaning</a></li>
+<li><a href="#merging"><span class="toc-section-number">2.3</span> Merging</a></li>
+</ul></li>
+<li><a href="#exploratory-data-analysis"><span class="toc-section-number">3</span> Exploratory Data Analysis</a><ul>
+<li><a href="#missing-data"><span class="toc-section-number">3.1</span> Missing Data</a></li>
+<li><a href="#distributions"><span class="toc-section-number">3.2</span> Distributions</a></li>
+<li><a href="#correlations"><span class="toc-section-number">3.3</span> Correlations</a></li>
+</ul></li>
+<li><a href="#maps"><span class="toc-section-number">4</span> Maps</a><ul>
+<li><a href="#speed"><span class="toc-section-number">4.1</span> Speed</a></li>
+<li><a href="#congestion"><span class="toc-section-number">4.2</span> Congestion</a></li>
+</ul></li>
+<li><a href="#extension"><span class="toc-section-number">5</span> Extension</a><ul>
+<li><a href="#load-the-data"><span class="toc-section-number">5.1</span> Load the data</a></li>
+<li><a href="#quick-visual-analysis"><span class="toc-section-number">5.2</span> Quick Visual Analysis</a></li>
+<li><a href="#plotting-average-speed-over-time"><span class="toc-section-number">5.3</span> Plotting Average Speed over Time</a></li>
+<li><a href="#road-use-over-time"><span class="toc-section-number">5.4</span> Road use over time</a></li>
+<li><a href="#cars-per-hour"><span class="toc-section-number">5.5</span> Cars per Hour</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="load-data" class="section level1">
+<h1><span class="header-section-number">1</span> Load Data</h1>
+<p>Let’s start with some open, real-time, Madrid traffic data! First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on <code>datos.madrid.es</code>. The measured points are a bit further hidden away on the website. But can be accessed <a href="http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&amp;vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD">here</a>, and downloaded as a zip file.</p>
+</div>
+<div id="data-cleaning" class="section level1">
+<h1><span class="header-section-number">2</span> Data Cleaning</h1>
+<div id="georreferencing" class="section level2">
+<h2><span class="header-section-number">2.1</span> Georreferencing</h2>
+<p>Now that we have loaded our packages and data, we find something interesting. The shapefile we loaded lacks a projection. Unfortunately the documentation does not specify the projection we need. After much googling, we wind up at the <a href="http://datos.madrid.es/FWProjects/egob/contenidos/datasets/ficheros/Manejo%20básico%20de%20archivos%20shp.pdf">Guía básica para el manejo de archivos Shapefile</a> which allows us to set our proj4 string as the following:</p>
+<p>+proj=utm +zone=30 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs</p>
+<pre class="r"><code>proj4string(measured.points) &lt;- proj
+
+madrid &lt;- read_osm(measured.points, type = &#39;maptoolkit-topo&#39;)
+
+tm_shape(madrid)+
+  tm_raster()+
+  tm_shape(measured.points)+
+  tm_dots(col = &#39;blue&#39;)+
+  tm_scale_bar()+
+  tm_style_natural()</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/mapping%20data-1.png" width="672" /></p>
+</div>
+<div id="data-cleaning-1" class="section level2">
+<h2><span class="header-section-number">2.2</span> Data Cleaning</h2>
+<p>Some weird things are still in our data. These will need to be looked at before we do anything else. A few histograms already show us that some of the data is encoded as negative. They do not provide an explanation of this in the data, but it seems to occurr when we receive an error message. Therefore we will remove the sensors providing an error message.</p>
+<pre class="r"><code>#Rename columns so they make more intuitive sense
+traffic &lt;- traffic0 %&gt;% 
+  mutate(
+    cars_hour = as.numeric(intensidad),
+    control_pnt_full = as.numeric(ocupacion),
+    load = as.numeric(carga),
+    saturation = as.numeric(intensidadSat),
+    avg_speed = as.numeric(velocidad)
+  ) %&gt;% 
+  select(codigo, descripcion, cars_hour, control_pnt_full, load, saturation, avg_speed, error)
+
+#Quick look at the data
+head(traffic)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["codigo"],"name":[1],"type":["chr"],"align":["left"]},{"label":["descripcion"],"name":[2],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[8],"type":["chr"],"align":["left"]}],"data":[{"1":"24001","2":"SEPÚLVEDA ENTRADA CRUCE  N-S","3":"85","4":"0","5":"5","6":"1800","7":"NA","8":"N"},{"1":"24002","2":"C.FCO.J.JIMENEZ ENTRE BERLANAS-SEPULVEDA  E-O","3":"85","4":"1","5":"6","6":"1500","7":"NA","8":"N"},{"1":"24003","2":"CJAL. FCO.J. JIMENEZ O-E(A. MORAN-ALHAMBRA)","3":"225","4":"4","5":"11","6":"3300","7":"NA","8":"N"},{"1":"24004","2":"C.FCO.J.JIMENEZ ENTRE HURTUMPASCUAL-ALHAMBRA  E-O","3":"225","4":"1","5":"16","6":"1500","7":"NA","8":"N"},{"1":"24005","2":"ALHAMBRA ENTRE C.FCO.J.MARTIN-C.POBLET  N-S","3":"360","4":"3","5":"22","6":"1800","7":"NA","8":"N"},{"1":"24006","2":"ALHAMBRA ENTRE C.POBLET-C.FCO.J.MARTIN  S-N","3":"765","4":"4","5":"45","6":"1800","7":"NA","8":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>#Below 0 values. Something is off.
+hist(traffic$cars_hour, right = F, main = &#39;Values Below Zero&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>#Remove non-functioning sensors. 
+traffic &lt;- traffic[!traffic$error==&#39;0 0 0 0 0 0 0 0&#39; &amp;
+                   !traffic$error==&#39;S&#39;,]
+
+#After accounting for the erros in sensors, we no longer find any. 
+hist(traffic$cars_hour, right = F, main = &#39;Values Below Zero&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
+<p>The documentation also metions that in our measuring points data, there is a factor that indicates urban or interurban positions. Let’s update these factorlabels.</p>
+<pre class="r"><code>#current labels
+levels(measured.points@data$tipo_elem)</code></pre>
+<pre><code>## [1] &quot;494&quot; &quot;495&quot;</code></pre>
+<pre class="r"><code>#Let&#39;s update these. 
+levels(measured.points@data$tipo_elem) &lt;- c(&#39;Highway&#39;, &#39;City Roads&#39;)</code></pre>
+</div>
+<div id="merging" class="section level2">
+<h2><span class="header-section-number">2.3</span> Merging</h2>
+<p>Now that we have our plotted data and the live data from Madrid, we can merge the two together into one SP dataframe. The documentation, <code>PUNTOS MEDIDA TRAFICO_MADRID.pdf</code>, indicates that in our <code>traffic</code> the column <code>codigo</code> should coincide with <code>COD_CENT</code> in our georeferenced set. We can use this as a key to merge the two.</p>
+<pre class="r"><code>traffic.full &lt;- merge(measured.points, traffic, 
+                      by.x=&#39;cod_cent&#39;, by.y=&#39;codigo&#39;, 
+                      duplicateGeoms = TRUE, all.x=F)
+head(traffic.full@data)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1320","8":"3","9":"20","10":"NA","11":"76","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"3660","8":"16","9":"57","10":"NA","11":"44","12":"N"},{"1":"PM41453","2":"3384","3":"Highway","4":"6823","5":"PM41453","6":"NA","7":"3120","8":"12","9":"67","10":"NA","11":"-1","12":"N"},{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"22","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"420","8":"2","9":"32","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"580","8":"27","9":"60","10":"940","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<div id="exploratory-data-analysis" class="section level1">
+<h1><span class="header-section-number">3</span> Exploratory Data Analysis</h1>
+<p>Let’s have a look at our data now. Just to get a better idea of what we’re working with. To make things easer on ourselves later, I only consider the cleaned data that merges well.</p>
+<div id="missing-data" class="section level2">
+<h2><span class="header-section-number">3.1</span> Missing Data</h2>
+<p>Let’s see how many missing values we have.</p>
+<pre class="r"><code>df &lt;- as.tbl(traffic.full@data)
+sapply(df, function(y) sum(is.na(y)))</code></pre>
+<pre><code>##         cod_cent              gid        tipo_elem           idelem 
+##                0                0                0                0 
+##           nombre      descripcion        cars_hour control_pnt_full 
+##                0              205                0                0 
+##             load       saturation        avg_speed            error 
+##                0              205             2918                0</code></pre>
+<p>So we are missing descriptions, which shouldn’t be too bad, since the name should be captured. We’re missing a lot of values for speed, speed and saturation/description. We will later see that this is because only the highways have spedometers, and the saturation levels are only calculated for city roads. It is not too troubling, except for later when we look at correlations. We’ll keep it in mind for the later excercises.</p>
+</div>
+<div id="distributions" class="section level2">
+<h2><span class="header-section-number">3.2</span> Distributions</h2>
+<p>Let’s see how our data are distributed.</p>
+<pre class="r"><code>df %&gt;% 
+  select(1, 7:11) %&gt;% 
+  melt(&quot;cod_cent&quot;) %&gt;% 
+  ggplot(aes(x=value))+
+  geom_density(fill=&#39;grey&#39;)+
+  facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Key things to note here are the crazy outliers we have in cars per hour for some areas, and our other data. Perhaps these are a function of the road type? Let’s have a look.</p>
+<pre class="r"><code>df %&gt;% 
+  select(1,3, 7:11) %&gt;% 
+  melt(c(&quot;cod_cent&quot;, &#39;tipo_elem&#39;)) %&gt;% 
+  ggplot(aes(x=value,  group=tipo_elem, fill=tipo_elem))+
+  geom_density(alpha=0.8)+
+  facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>A first thing to note here is that the speed data is only available on the highway, whereas we find the saturation levels only on city roads. A quick check with our source documentation confirms this to be the case. However, It turns out it’s a bit hard to see this due to all the outliers tampering with our tails in the distribution. Let’s get rid of these first, and then recreate the graphs from above. To do this quickly, we use the <code>outliers</code> package.</p>
+<pre class="r"><code>df2 &lt;- df
+df2[,7:11] &lt;- df[,7:11] %&gt;% 
+   rm.outlier(fill=TRUE, median=TRUE)
+
+df2 %&gt;% 
+  select(1,3, 7:11) %&gt;% 
+  melt(c(&quot;cod_cent&quot;, &#39;tipo_elem&#39;)) %&gt;% 
+  ggplot(aes(x=value,  group=tipo_elem, fill=tipo_elem))+
+  geom_density(alpha=0.8)+
+  facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
+<pre><code>## Warning: Removed 3126 rows containing non-finite values (stat_density).</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>There we go. A lot more informative. One key thing to notice immediately is that our city roads have much fewer cars per hour than our highways: which makes a lot of sense. We also see that they aren’t used quite as heavily as the highway.</p>
+<p>I think we’ve done about all we can with the distributions. Let’s have a look at the correlations in our data.</p>
+</div>
+<div id="correlations" class="section level2">
+<h2><span class="header-section-number">3.3</span> Correlations</h2>
+<p>Let’s have a quick look at the correlations of the variables. Since two variables overlap, we’ll make two charts.</p>
+<pre class="r"><code>df %&gt;% 
+  filter(tipo_elem == &#39;City Roads&#39;) %&gt;% 
+  select(7:10) %&gt;% 
+  cor(use=&#39;complete&#39;) %&gt;% 
+  corrplot(&#39;square&#39;, main=&#39;City Roads&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>df %&gt;% 
+  filter(tipo_elem == &#39;Highway&#39;) %&gt;% 
+  select(7:11, -10) %&gt;% 
+  cor(use=&#39;complete&#39;) %&gt;% 
+  corrplot(&#39;square&#39;, main=&#39;Highway&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+<p>Our main conclusions here:</p>
+<p>*Saturation and load are positively correlated with cars per hour. This makes sense, as these all measure how busy a given road is.</p>
+<p>*On highways, number of cars by the control point are also positively correlated with these. So is the average speed. This would suggest that as there’s more traffic passing per hour, the average speed tends to be higher. (Although I’m sure that during traffic jams, this would look differently.)</p>
+<p>*On city roads, it all tends to be a bit less strongly correlated. The exception being the load and cars at the control points. Strangly, Saturation appears to be slightly negatively correlated with load and control points being full. This is against expactations.</p>
+</div>
+</div>
+<div id="maps" class="section level1">
+<h1><span class="header-section-number">4</span> Maps</h1>
+<p>Now that we have joined, cleaned, and briefly analysed our data we can start looking at more interesting plots. Let’s start by finding out speedy roads.</p>
+<div id="speed" class="section level2">
+<h2><span class="header-section-number">4.1</span> Speed</h2>
+<p>We subset our dataset to the points we have speed data on and recreate our map.</p>
+<pre class="r"><code>speed &lt;- subset(traffic.full, !is.na(avg_speed))
+head(speed@data)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1320","8":"3","9":"20","10":"NA","11":"76","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"3660","8":"16","9":"57","10":"NA","11":"44","12":"N"},{"1":"PM41453","2":"3384","3":"Highway","4":"6823","5":"PM41453","6":"NA","7":"3120","8":"12","9":"67","10":"NA","11":"-1","12":"N"},{"1":"PM31263","2":"432","3":"Highway","4":"3839","5":"PM31263","6":"NA","7":"2340","8":"9","9":"52","10":"NA","11":"89","12":"N"},{"1":"PM31264","2":"3341","3":"Highway","4":"6777","5":"PM31264","6":"NA","7":"1200","8":"10","9":"53","10":"NA","11":"71","12":"N"},{"1":"PM30461","2":"430","3":"Highway","4":"3837","5":"PM30461","6":"NA","7":"5220","8":"12","9":"58","10":"NA","11":"77","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>#Download a simpler map so it&#39;s easier to see for colourblind me. 
+madrid.spd &lt;- read_osm(speed, type = &#39;stamen-toner&#39;)
+
+#Going to reverse the pallete here, so red can mean congested/slow
+tm_shape(madrid.spd)+
+  tm_raster()+
+  tm_shape(speed)+
+  tm_dots(col = &#39;avg_speed&#39;, palette= rev(pal),size = 0.2) + 
+  tm_scale_bar() +
+  tm_style_natural()</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="congestion" class="section level2">
+<h2><span class="header-section-number">4.2</span> Congestion</h2>
+<p>Let’s have a similar look at the most congested roads!</p>
+<pre class="r"><code>saturation &lt;- subset(traffic.full, !is.na(saturation))
+head(saturation@data)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"22","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"420","8":"2","9":"32","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"580","8":"27","9":"60","10":"940","11":"NA","12":"N"},{"1":"45021","2":"2534","3":"City Roads","4":"5967","5":"Pl. Alsacia - Malmoe-Hermanos Garc\\xeda Noblejas","6":"Pl. Alsacia - Malmoe-Hermanos García Noblejas","7":"2560","8":"17","9":"50","10":"4300","11":"NA","12":"N"},{"1":"45049","2":"2560","3":"City Roads","4":"5993","5":"Pl. Alsacia - Fuente Carrantona-Malmoe","6":"Pl. Alsacia - Fuente Carrantona-Malmoe","7":"20","8":"1","9":"11","10":"100","11":"NA","12":"N"},{"1":"59017","2":"2938","3":"City Roads","4":"6371","5":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y Garc\\xeda","6":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y García","7":"360","8":"5","9":"34","10":"850","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<pre class="r"><code>#Download a simpler map so it&#39;s easier to see for colourblind me. 
+madrid.sat &lt;- read_osm(saturation, type = &#39;stamen-toner&#39;)
+
+tm_shape(madrid.sat)+
+  tm_raster()+
+  tm_shape(saturation)+
+  tm_dots(col = &#39;saturation&#39;, palette=pal, size = 0.1) +
+  tm_scale_bar()+
+  tm_style_natural()</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+</div>
+</div>
+<div id="extension" class="section level1">
+<h1><span class="header-section-number">5</span> Extension</h1>
+<p>Now let’s timeset this data. The <a href="http://datos.madrid.es/FWProjects/egob/contenidos/datasets/ficheros/Estructura%20y%20contenido%20del%20fichero%20csv.pdf">documentation</a> specifies how to treat this data. First of all, since we’ll be working with a dataset that is about 700 MB large, I’ll be loading up the data.table package and working with that so we can use <code>fread()</code>.</p>
+<div id="load-the-data" class="section level2">
+<h2><span class="header-section-number">5.1</span> Load the data</h2>
+<p>Now I would like to extend this with historic data. To save my computer I will only use one month’s worth of data, February 2017. <code>Actually, this is hurting my Laptop substantially, so I will be looking at my birthday only.</code></p>
+<pre class="r"><code>#Load data
+traffic_feb &lt;- fread(&quot;~/Documents/R/Madrid - Traffic/02-2017.csv&quot;, sep = &#39;;&#39;)</code></pre>
+<pre><code>## 
+Read 0.0% of 8823517 rows
+Read 21.3% of 8823517 rows
+Read 43.9% of 8823517 rows
+Read 64.6% of 8823517 rows
+Read 84.3% of 8823517 rows
+Read 8823517 rows and 10 (of 10) columns from 0.638 GB file in 00:00:08</code></pre>
+<pre class="r"><code>#Quick Peak
+glimpse(traffic_feb)</code></pre>
+<pre><code>## Observations: 8,823,517
+## Variables: 10
+## $ idelem              &lt;int&gt; 3753, 4021, 4022, 4023, 4024, 4025, 4026, ...
+## $ fecha               &lt;chr&gt; &quot;2017-02-18 01:45:00&quot;, &quot;2017-02-18 01:45:0...
+## $ identif             &lt;chr&gt; &quot;09004&quot;, &quot;09005&quot;, &quot;09006&quot;, &quot;09007&quot;, &quot;09008...
+## $ tipo_elem           &lt;chr&gt; &quot;PUNTOS MEDIDA URBANOS&quot;, &quot;PUNTOS MEDIDA UR...
+## $ intensidad          &lt;int&gt; 1986, 330, 298, 263, 95, 866, 422, 300, 42...
+## $ ocupacion           &lt;int&gt; 23, 1, 1, 4, 0, 4, 2, 3, 3, 2, 2, 2, 4, 2,...
+## $ carga               &lt;int&gt; 93, 19, 31, 23, 10, 21, 21, 24, 22, 18, 14...
+## $ vmed                &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+## $ error               &lt;chr&gt; &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N...
+## $ periodo_integracion &lt;int&gt; 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15...</code></pre>
+<pre class="r"><code>#Recode our time data. 
+traffic_feb$fecha &lt;- ymd_hms(traffic_feb$fecha)
+
+bday &lt;- traffic_feb %&gt;% 
+  filter(day(fecha)==17)
+
+rm(traffic_feb)</code></pre>
+</div>
+<div id="quick-visual-analysis" class="section level2">
+<h2><span class="header-section-number">5.2</span> Quick Visual Analysis</h2>
+<p>Now, the added benefit of having this data as a time series is that we can look at figures over time. Let’s look at traffic data over time.</p>
+<pre class="r"><code>bday %&gt;%
+  select(fecha, tipo_elem, identif, vmed) %&gt;% 
+  filter(vmed &gt; 0) %&gt;% 
+  ggplot(aes(fecha, vmed, group=identif)) +
+  geom_line(alpha=0.09)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Main conclusion number one: it’s difficult to draw conclusions when there’s this many observations. We do, however, clearly see when it’s rush hour. Does this make sense? It was on a Friday. So Yes! That also explains why we see people leaving work from around 14:00.</p>
+<p>Let’s delve into this a bit more by aggregating our data to city roads and the highway.</p>
+<pre class="r"><code>bday %&gt;% 
+  group_by(fecha, tipo_elem) %&gt;% 
+  summarise(
+    cars_hour = mean(intensidad),
+    road_use = mean(carga),
+    avg_speed = mean(vmed),
+    errors = sum(error!=&#39;N&#39;) #It appears there&#39;s no faulty machinery on this day. Hurrah!
+  ) %&gt;% 
+  melt(c(&#39;fecha&#39;, &#39;tipo_elem&#39;)) %&gt;% 
+  ggplot(aes(x=fecha, y=value, group=tipo_elem, col=tipo_elem)) +
+  geom_line() +
+  facet_grid(variable~., scales = &#39;free_y&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>As such it seems to be that when we average things out, there are similar patterns to be found here as in the real-time data. There are fewer overall cars per hour, put road usage is very similar, if not higher in urban settings.</p>
+<p>Just as a quick curiosity: I wonder what’s the highest average speed recorded this day. 115 KmH. Not bad!</p>
+</div>
+<div id="plotting-average-speed-over-time" class="section level2">
+<h2><span class="header-section-number">5.3</span> Plotting Average Speed over Time</h2>
+<p><code>Warning: This section involves some heavy data cleaning</code> Now, after reading the documentation and seeing the <code>animation_tmap()</code> function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though.</p>
+<pre class="r"><code>Mode &lt;- function(x) {
+  ux &lt;- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+bday.hr &lt;- bday %&gt;% 
+  mutate(hour = floor_date((fecha), &#39;hour&#39;)) %&gt;%
+  group_by(idelem, hour) %&gt;% 
+  summarise(
+    cars_hour = mean(intensidad),
+    road_use = mean(carga),
+    avg_speed = mean(vmed),
+    type = Mode(tipo_elem)
+  )
+
+#First we need to subset our SP object.
+measured.points.red &lt;- subset(measured.points, idelem %in% bday.hr$idelem)
+
+#It&#39;s not NA data. 
+sapply(bday.hr, function(y) sum(is.na(y)))</code></pre>
+<pre><code>##    idelem      hour cars_hour  road_use avg_speed      type 
+##         0         0         0         0         0         0</code></pre>
+<pre class="r"><code>ids &lt;- unique(bday.hr$idelem)
+id.occurance &lt;- 0
+for (i in 1:length(ids)){
+  id.occurance[i] &lt;- sum(bday.hr$idelem==ids[i])
+}
+
+id.df &lt;- data.frame(ID= ids, N=id.occurance)
+id.df %&gt;% 
+  ggplot(aes(ID, N)) +
+  geom_histogram(stat=&#39;identity&#39;)</code></pre>
+<pre><code>## Warning: Ignoring unknown parameters: binwidth, bins, pad</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>#So it seems like we have quite a few missing. Let&#39;s clean this out.
+#Most have an occurance of:
+median(id.df$N)</code></pre>
+<pre><code>## [1] 24</code></pre>
+<pre class="r"><code>#Let&#39;s remove all those that aren&#39;t at this level. 
+remove.id &lt;- id.df %&gt;% filter(N!= median(id.df$N))
+measured.points.red &lt;- subset(measured.points.red, !(idelem %in% remove.id$ID))
+bday.hr.red &lt;- bday.hr %&gt;%  filter(!(idelem %in% remove.id$ID))
+
+#Let&#39;s look at our key variable. It looks like our sp data is coded as factors. 
+str(measured.points.red@data)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    3089 obs. of  5 variables:
+##  $ gid      : Factor w/ 3868 levels &quot;1&quot;,&quot;10&quot;,&quot;100&quot;,..: 2684 1050 2626 2930 3688 1284 1272 1692 2137 2142 ...
+##  $ tipo_elem: Factor w/ 2 levels &quot;Highway&quot;,&quot;City Roads&quot;: 1 1 1 2 2 2 2 2 2 2 ...
+##  $ idelem   : Factor w/ 3868 levels &quot;10000&quot;,&quot;10001&quot;,..: 83 285 3443 3618 914 2235 2224 2603 3003 3007 ...
+##  $ cod_cent : Factor w/ 3868 levels &quot;01001&quot;,&quot;01002&quot;,..: 114 3798 3840 15 528 2450 2478 1733 2266 2270 ...
+##  $ nombre   : Factor w/ 3806 levels &quot;((MICRO) P\xba Recoletos(Cibeles - Marques del Duero) - ((MICRO) P\xba Recoletos(Cibeles - Marques del Duero)&quot;,..: 479 3290 3332 2933 2796 723 619 3078 1856 890 ...</code></pre>
+<pre class="r"><code>str(bday.hr.red)</code></pre>
+<pre><code>## Classes &#39;grouped_dt&#39;, &#39;tbl_dt&#39;, &#39;tbl&#39;, &#39;tbl_dt&#39;, &#39;tbl&#39;, &#39;data.table&#39; and &#39;data.frame&#39;:   76032 obs. of  6 variables:
+##  $ idelem   : int  3579 3579 3579 3579 3579 3579 3579 3579 3579 3579 ...
+##  $ hour     : POSIXct, format: &quot;2017-02-17 07:00:00&quot; &quot;2017-02-17 08:00:00&quot; ...
+##  $ cars_hour: num  202 422 546 562 595 ...
+##  $ road_use : num  12.5 30.2 40.5 42 45.2 ...
+##  $ avg_speed: num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ type     : chr  &quot;PUNTOS MEDIDA URBANOS&quot; &quot;PUNTOS MEDIDA URBANOS&quot; &quot;PUNTOS MEDIDA URBANOS&quot; &quot;PUNTOS MEDIDA URBANOS&quot; ...
+##  - attr(*, &quot;.internal.selfref&quot;)=&lt;externalptr&gt; 
+##  - attr(*, &quot;vars&quot;)=List of 1
+##   ..$ : symbol idelem</code></pre>
+<pre class="r"><code>#Shame on me for not cleaning this properly to begin with. 
+measured.points.red@data$idelem &lt;- measured.points.red@data$idelem %&gt;% 
+  as.character %&gt;% 
+  as.numeric
+
+#Let&#39;s just all mash it into one DF then. 
+df.coord &lt;- data.frame(idelem = measured.points.red$idelem, x = coordinates(measured.points.red)[,1], 
+                  y = coordinates(measured.points.red)[,2])
+
+df.bday &lt;- merge(bday.hr.red, df.coord, by=&#39;idelem&#39;, all.x=T)
+df.bday &lt;- df.bday[complete.cases(df.bday),]
+
+bday.hr.stidf &lt;- stConstruct(df.bday, c(&quot;x&quot;, &quot;y&quot;), &quot;hour&quot;, interval = TRUE, crs = CRS(proj))
+class(bday.hr.stidf) #success!</code></pre>
+<pre><code>## [1] &quot;STIDF&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;spacetime&quot;</code></pre>
+<pre class="r"><code>#Speedplot
+speed.stidf &lt;- subset(bday.hr.stidf, bday.hr.stidf@data$avg_speed&gt;0)
+stplot(speed.stidf[,,&#39;avg_speed&#39;], number=24, alpha=0.7, cex=0.4)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-13-2.png" width="672" /></p>
+</div>
+<div id="road-use-over-time" class="section level2">
+<h2><span class="header-section-number">5.4</span> Road use over time</h2>
+<p>Now that the hard work is over, we can simply call the functions and dataframes from the previous section. Since nighttime isn’t as interesting to us, we will filter it.</p>
+<pre class="r"><code>#Road Use
+road_use.stidf &lt;- subset(bday.hr.stidf, hour(bday.hr.stidf@time)&gt;6)
+stplot(road_use.stidf[,,&#39;road_use&#39;], alpha=1, cex=0.25, number=17)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+</div>
+<div id="cars-per-hour" class="section level2">
+<h2><span class="header-section-number">5.5</span> Cars per Hour</h2>
+<p>Now, for our final plot we can look at the cars per hour metric. It makes sense to split this into one for the highway and one for the inner city, so let’s do this.</p>
+<pre class="r"><code>cars_hour.city.stidf &lt;- subset(bday.hr.stidf, 
+                               bday.hr.stidf@data$type==&#39;PUNTOS MEDIDA URBANOS&#39;)
+cars_hour.highway.stidf &lt;- subset(bday.hr.stidf, 
+                               bday.hr.stidf@data$type!=&#39;PUNTOS MEDIDA URBANOS&#39;)
+
+#This plot comes out nicely.
+stplot(cars_hour.highway.stidf[,,&#39;cars_hour&#39;], alpha=1, cex=0.25, number=24)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre class="r"><code>#However, for the city one we will have to take a log to scale it. 
+cars_hour.city.stidf@data$cars_hour &lt;- (cars_hour.city.stidf@data$cars_hour+1) %&gt;% log
+stplot(cars_hour.city.stidf[,,&#39;cars_hour&#39;], alpha=1, cex=0.25, number=24)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-15-2.png" width="672" /></p>
+<p>And that’s all for now! :-)</p>
+</div>
+</div>
+
+         <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'data-science-portfolio';
+    var disqus_identifier = '\/portfolio\/traffic\/';
+    var disqus_title = 'Madrid - Real-time Traffic';
+    var disqus_url = '\/portfolio\/traffic\/';
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+          </div>
+      </div>
+  </div>
+  <script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.cookie.js"> </script>
+<script src="/js/ekko-lightbox.js"></script>
+<script src="/js/jquery.scrollTo.min.js"></script>
+<script src="/js/masonry.pkgd.min.js"></script>
+<script src="/js/imagesloaded.pkgd.min.js"></script>
+<script src="/js/owl.carousel.min.js"></script>
+<script src="/js/front.js"></script>
+
+</body>
+</html>

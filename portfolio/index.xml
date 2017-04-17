@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Portfolios on Data Science Portfolio</title>
+    <link>/portfolio/</link>
+    <description>Recent content in Portfolios on Data Science Portfolio</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy;2016 Timo Roest</copyright>
+    
+	<atom:link href="/portfolio/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Madrid - Real-time Traffic</title>
+      <link>/portfolio/traffic/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/portfolio/traffic/</guid>
+      <description>1 Load Data 2 Data Cleaning 2.1 Georreferencing 2.2 Data Cleaning 2.3 Merging  3 Exploratory Data Analysis 3.1 Missing Data 3.2 Distributions 3.3 Correlations  4 Maps 4.1 Speed 4.2 Congestion  5 Extension 5.1 Load the data 5.2 Quick Visual Analysis 5.3 Plotting Average Speed over Time 5.4 Road use over time 5.5 Cars per Hour    1 Load Data Let’s start with some open, real-time, Madrid traffic data!</description>
+    </item>
+    
+    <item>
+      <title>Pets in Madrid</title>
+      <link>/portfolio/pets/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/portfolio/pets/</guid>
+      <description>1 Intro 2 Loading and Cleaning 3 Cats vs Dogs 4 Demographic Data   1 Intro Let’s try and get some information on pets in Madrid! Fortunately, they have information freely available on datos.madrid.es. This will only be a short analysis and we will try to see if we can find some basic patterns in the data. Let’s start by loading our libraries.
+ 2 Loading and Cleaning First we load this data:</description>
+    </item>
+    
+    <item>
+      <title>Shiny Stock App</title>
+      <link>/portfolio/stock_app/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/portfolio/stock_app/</guid>
+      <description>Now, a friend of mine had been looking around for an extension to let him download historic stock data. Now, these extensions in Excel tend to use macros and break often, so I figured this would be a nice opportunity to learn all about Shiny in R and make him an application.
+The link to the final application can be found here. The actual R code it uses is quite simplistic.</description>
+    </item>
+    
+  </channel>
+</rss>

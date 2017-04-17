@@ -1,0 +1,18 @@
+---
+title: "About Me"
+author: "Timo"
+date: 4/15/2017
+---
+This is a really brief and short summary about me!
+
+#### Education
+
+* BA in English
+* BSc in International Business Administration
+* MSc in Specialised Economic Analysis 
+
+#### Languages 
+
+* Dutch
+* English
+* Spanish
