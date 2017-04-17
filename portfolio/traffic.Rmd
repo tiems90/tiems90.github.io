@@ -15,7 +15,7 @@ description: "This workbook is mostly concerned with cleaning and analysing both
 Let's start with some open, real-time, Madrid traffic data!
 First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on `datos.madrid.es`. The measured points are a bit further hidden away on the website. But can be accessed [here](http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD), and downloaded as a zip file. 
 
-```{r loading data, results='hide',message=FALSE, warning=FALSE}
+```{r loading data, results='hide',message=FALSE, warning=FALSE, cache=TRUE}
 #Data Loading
 library(XML)
 library(sp)
@@ -257,7 +257,7 @@ Now let's timeset this data. The [documentation](http://datos.madrid.es/FWProjec
 ##Load the data
 Now I would like to extend this with historic data. To save my computer I will only use one month's worth of data, February 2017. `Actually, this is hurting my Laptop substantially, so I will be looking at my birthday only.`
 
-```{r Load Big Dataset}
+```{r Load Big Dataset, cache=TRUE}
 #Load data
 traffic_feb <- fread("~/Documents/R/Madrid - Traffic/02-2017.csv", sep = ';')
 
