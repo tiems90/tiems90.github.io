@@ -15,7 +15,7 @@ description: "This workbook is mostly concerned with cleaning and analysing both
 Let's start with some open, real-time, Madrid traffic data!
 First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on `datos.madrid.es`. The measured points are a bit further hidden away on the website. But can be accessed [here](http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD), and downloaded as a zip file. 
 
-```{r loading data, results='hide'}
+```{r loading data, results='hide',message=FALSE, warning=FALSE}
 #Data Loading
 library(XML)
 library(sp)
@@ -43,7 +43,7 @@ measured.points <- readOGR(dsn = path.expand("~/Documents/R/Git/data/data_madrid
 
 #Set Parameters
 proj <- '+proj=utm +zone=30 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs'
-pal <- get_brewer_pal('YlOrRd', 5)
+pal <- get_brewer_pal('YlOrRd', 5, plot = FALSE)
 ```
 
 #Data Cleaning
@@ -205,11 +205,9 @@ df %>%
 
 Our main conclusions here:
 
-*Saturation and load are positively correlated with cars per hour. This makes sense, as these all measure how busy a given road is. 
-
-*On highways, number of cars by the control point are also positively correlated with these. So is the average speed. This would suggest that as there's more traffic passing per hour, the average speed tends to be higher. (Although I'm sure that during traffic jams, this would look differently.)
-
-*On city roads, it all tends to be a bit less strongly correlated. The exception being the load and cars at the control points. Strangly, Saturation appears to be slightly negatively correlated with load and control points being full. This is against expactations. 
+* Saturation and load are positively correlated with cars per hour. This makes sense, as these all measure how busy a given road is. 
+* On highways, number of cars by the control point are also positively correlated with these. So is the average speed. This would suggest that as there's more traffic passing per hour, the average speed tends to be higher. (Although I'm sure that during traffic jams, this would look differently.)
+* On city roads, it all tends to be a bit less strongly correlated. The exception being the load and cars at the control points. Strangly, Saturation appears to be slightly negatively correlated with load and control points being full. This is against expactations. 
 
 #Maps
 Now that we have joined, cleaned, and briefly analysed our data we can start looking at more interesting plots.
@@ -313,6 +311,7 @@ Just as a quick curiosity: I wonder what's the highest average speed recorded th
 
 ##Plotting Average Speed over Time
 `Warning: This section involves some heavy data cleaning`
+
 Now, after reading the documentation and seeing the `animation_tmap()` function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though. Sadly, thusfar I haven't been able to get any animations going, and in order to accomodate panel data, I was not able to use the `tmap` package, but had to switch to `spacetime`. The results are seen below. (Also, yes. I needed to find the most common occuring element, so I had to create a mode function.)
 
 ```{r}

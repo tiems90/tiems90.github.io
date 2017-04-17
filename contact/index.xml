@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Data Science Portfolio</title>
+    <title>Get in touch on Data Science Portfolio</title>
     <link>/contact/</link>
-    <description>Recent content on Data Science Portfolio</description>
+    <description>Recent content in Get in touch on Data Science Portfolio</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy;2016 Timo Roest</copyright>
+    <lastBuildDate>Sun, 06 Nov 2016 13:00:25 +0530</lastBuildDate>
     
 	<atom:link href="/contact/index.xml" rel="self" type="application/rss+xml" />
     
