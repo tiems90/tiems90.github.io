@@ -37,7 +37,7 @@ ga('send', 'pageview');
   <div class="sidebar-content">
     <h1 class="sidebar-heading"><a href="/">Data Science Portfolio</a></h1>
     
-      <p class="sidebar-p">I am a recently graduated Data Scientist.</p>
+      <p class="sidebar-p">I am a recently graduated Data Scientist taking part in the Telefonica Graduate Programme.</p>
     
       <p class="sidebar-p">Originally from The Netherlands, currently based in Madrid.</p>
     
@@ -72,10 +72,9 @@ ga('send', 'pageview');
         
           &copy;2016 Timo Roest
         
-        | <small> <br>Credits for the <a href="https://bootstrapious.com/free-templates" class="external">Template</a>
+        | Template by <a href="https://bootstrapious.com/free-templates" class="external">Bootstrapious.com</a>
 
-&amp; <a href="https://github.com/kishaningithub">port.</a>
-</small>
+&amp; ported to Hugo by <a href="https://github.com/kishaningithub">Kishan B</a>
 
       </p>
     </div>
@@ -125,6 +124,72 @@ ga('send', 'pageview');
 <div id="load-data" class="section level1">
 <h1><span class="header-section-number">1</span> Load Data</h1>
 <p>Let’s start with some open, real-time, Madrid traffic data! First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on <code>datos.madrid.es</code>. The measured points are a bit further hidden away on the website. But can be accessed <a href="http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&amp;vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD">here</a>, and downloaded as a zip file.</p>
+<pre class="r"><code>#Data Loading
+library(XML)</code></pre>
+<pre><code>## Loading required package: methods</code></pre>
+<pre class="r"><code>library(sp)
+library(readr)
+library(data.table)
+library(spacetime)
+
+#Data Wrangling &amp; Analysis
+library(tidyverse)</code></pre>
+<pre><code>## Loading tidyverse: ggplot2
+## Loading tidyverse: tibble
+## Loading tidyverse: tidyr
+## Loading tidyverse: purrr
+## Loading tidyverse: dplyr</code></pre>
+<pre><code>## Conflicts with tidy packages ----------------------------------------------</code></pre>
+<pre><code>## between():   dplyr, data.table
+## filter():    dplyr, stats
+## first():     dplyr, data.table
+## lag():       dplyr, stats
+## last():      dplyr, data.table
+## transpose(): purrr, data.table</code></pre>
+<pre class="r"><code>library(reshape2)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;reshape2&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
+## 
+##     smiths</code></pre>
+<pre><code>## The following objects are masked from &#39;package:data.table&#39;:
+## 
+##     dcast, melt</code></pre>
+<pre class="r"><code>library(outliers)
+library(corrplot)
+library(lubridate)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:data.table&#39;:
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     date</code></pre>
+<pre class="r"><code>library(dtplyr)
+
+#Maps
+library(rgdal)</code></pre>
+<pre><code>## rgdal: version: 1.2-6, (SVN revision 651)
+##  Geospatial Data Abstraction Library extensions to R successfully loaded
+##  Loaded GDAL runtime: GDAL 2.1.2, released 2016/10/24
+##  Path to GDAL shared files: /Users/Timo/Library/R/3.3/library/rgdal/gdal
+##  Loaded PROJ.4 runtime: Rel. 4.9.1, 04 March 2015, [PJ_VERSION: 491]
+##  Path to PROJ.4 shared files: /Users/Timo/Library/R/3.3/library/rgdal/proj
+##  Linking to sp version: 1.2-4</code></pre>
+<pre class="r"><code>library(tmap)
+library(tmaptools)
+
+#Load Data
+traffic0 &lt;- xmlToDataFrame(&#39;http://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml&#39;) 
+head(traffic0)
+measured.points &lt;- readOGR(dsn = path.expand(&quot;~/Documents/R/Git/data/data_madrid&quot;), &#39;pmed_trafico&#39;)
+
+#Set Parameters
+proj &lt;- &#39;+proj=utm +zone=30 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs&#39;
+pal &lt;- get_brewer_pal(&#39;YlOrRd&#39;, 5)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/loading%20data-1.png" width="672" /></p>
 </div>
 <div id="data-cleaning" class="section level1">
 <h1><span class="header-section-number">2</span> Data Cleaning</h1>
@@ -135,20 +200,20 @@ ga('send', 'pageview');
 <pre class="r"><code>proj4string(measured.points) &lt;- proj
 
 madrid &lt;- read_osm(measured.points, type = &#39;maptoolkit-topo&#39;)
-
 tm_shape(madrid)+
   tm_raster()+
   tm_shape(measured.points)+
   tm_dots(col = &#39;blue&#39;)+
   tm_scale_bar()+
-  tm_style_natural()</code></pre>
+  tm_style_natural() +
+  tm_layout(title = &#39;Measured Points&#39;)</code></pre>
 <p><img src="/portfolio/traffic_files/figure-html/mapping%20data-1.png" width="672" /></p>
 </div>
 <div id="data-cleaning-1" class="section level2">
 <h2><span class="header-section-number">2.2</span> Data Cleaning</h2>
 <p>Some weird things are still in our data. These will need to be looked at before we do anything else. A few histograms already show us that some of the data is encoded as negative. They do not provide an explanation of this in the data, but it seems to occurr when we receive an error message. Therefore we will remove the sensors providing an error message.</p>
-<pre class="r"><code>#Rename columns so they make more intuitive sense
-traffic &lt;- traffic0 %&gt;% 
+<p>Let’s start by renaming the columns so they make more sense and see what it looks like after we do that.</p>
+<pre class="r"><code>traffic &lt;- traffic0 %&gt;% 
   mutate(
     cars_hour = as.numeric(intensidad),
     control_pnt_full = as.numeric(ocupacion),
@@ -162,20 +227,17 @@ traffic &lt;- traffic0 %&gt;%
 head(traffic)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["codigo"],"name":[1],"type":["chr"],"align":["left"]},{"label":["descripcion"],"name":[2],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[8],"type":["chr"],"align":["left"]}],"data":[{"1":"24001","2":"SEPÚLVEDA ENTRADA CRUCE  N-S","3":"85","4":"0","5":"5","6":"1800","7":"NA","8":"N"},{"1":"24002","2":"C.FCO.J.JIMENEZ ENTRE BERLANAS-SEPULVEDA  E-O","3":"85","4":"1","5":"6","6":"1500","7":"NA","8":"N"},{"1":"24003","2":"CJAL. FCO.J. JIMENEZ O-E(A. MORAN-ALHAMBRA)","3":"225","4":"4","5":"11","6":"3300","7":"NA","8":"N"},{"1":"24004","2":"C.FCO.J.JIMENEZ ENTRE HURTUMPASCUAL-ALHAMBRA  E-O","3":"225","4":"1","5":"16","6":"1500","7":"NA","8":"N"},{"1":"24005","2":"ALHAMBRA ENTRE C.FCO.J.MARTIN-C.POBLET  N-S","3":"360","4":"3","5":"22","6":"1800","7":"NA","8":"N"},{"1":"24006","2":"ALHAMBRA ENTRE C.POBLET-C.FCO.J.MARTIN  S-N","3":"765","4":"4","5":"45","6":"1800","7":"NA","8":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["codigo"],"name":[1],"type":["chr"],"align":["left"]},{"label":["descripcion"],"name":[2],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[8],"type":["chr"],"align":["left"]}],"data":[{"1":"24001","2":"SEPÚLVEDA ENTRADA CRUCE  N-S","3":"360","4":"2","5":"22","6":"1800","7":"NA","8":"N"},{"1":"24002","2":"C.FCO.J.JIMENEZ ENTRE BERLANAS-SEPULVEDA  E-O","3":"675","4":"4","5":"47","6":"1500","7":"NA","8":"N"},{"1":"24003","2":"CJAL. FCO.J. JIMENEZ O-E(A. MORAN-ALHAMBRA)","3":"90","4":"1","5":"3","6":"3300","7":"NA","8":"N"},{"1":"24004","2":"C.FCO.J.JIMENEZ ENTRE HURTUMPASCUAL-ALHAMBRA  E-O","3":"45","4":"0","5":"3","6":"1500","7":"NA","8":"N"},{"1":"24005","2":"ALHAMBRA ENTRE C.FCO.J.MARTIN-C.POBLET  N-S","3":"45","4":"0","5":"3","6":"1800","7":"NA","8":"N"},{"1":"24006","2":"ALHAMBRA ENTRE C.POBLET-C.FCO.J.MARTIN  S-N","3":"270","4":"2","5":"17","6":"1800","7":"NA","8":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code>#Below 0 values. Something is off.
-hist(traffic$cars_hour, right = F, main = &#39;Values Below Zero&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<p>Here I spotted something strange. Cars/Hour takes a negative value at times. Let’s explore this a bit further in a plot.</p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>It looks like we have quite a few of these. After looking around in the data it seems these errors occur in the instances that there is an error in the machine. So let’s remove all the sensors who are giving error messages.</p>
 <pre class="r"><code>#Remove non-functioning sensors. 
 traffic &lt;- traffic[!traffic$error==&#39;0 0 0 0 0 0 0 0&#39; &amp;
-                   !traffic$error==&#39;S&#39;,]
-
-#After accounting for the erros in sensors, we no longer find any. 
-hist(traffic$cars_hour, right = F, main = &#39;Values Below Zero&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
-<p>The documentation also metions that in our measuring points data, there is a factor that indicates urban or interurban positions. Let’s update these factorlabels.</p>
+                   !traffic$error==&#39;S&#39;,]</code></pre>
+<p>And let’s see if that fixed our problem! <img src="/portfolio/traffic_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>The documentation also metions that in our measuring points data, there is a factor that indicates urban or interurban positions. Let’s update these factor labels.</p>
 <pre class="r"><code>#current labels
 levels(measured.points@data$tipo_elem)</code></pre>
 <pre><code>## [1] &quot;494&quot; &quot;495&quot;</code></pre>
@@ -191,7 +253,7 @@ levels(measured.points@data$tipo_elem) &lt;- c(&#39;Highway&#39;, &#39;City Road
 head(traffic.full@data)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1320","8":"3","9":"20","10":"NA","11":"76","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"3660","8":"16","9":"57","10":"NA","11":"44","12":"N"},{"1":"PM41453","2":"3384","3":"Highway","4":"6823","5":"PM41453","6":"NA","7":"3120","8":"12","9":"67","10":"NA","11":"-1","12":"N"},{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"22","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"420","8":"2","9":"32","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"580","8":"27","9":"60","10":"940","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1020","8":"2","9":"15","10":"NA","11":"80","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"2580","8":"13","9":"43","10":"NA","11":"45","12":"N"},{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"30","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"240","8":"1","9":"19","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"360","8":"4","9":"42","10":"940","11":"NA","12":"N"},{"1":"45021","2":"2534","3":"City Roads","4":"5967","5":"Pl. Alsacia - Malmoe-Hermanos Garc\\xeda Noblejas","6":"Pl. Alsacia - Malmoe-Hermanos García Noblejas","7":"1400","8":"7","9":"35","10":"4300","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -207,9 +269,9 @@ sapply(df, function(y) sum(is.na(y)))</code></pre>
 <pre><code>##         cod_cent              gid        tipo_elem           idelem 
 ##                0                0                0                0 
 ##           nombre      descripcion        cars_hour control_pnt_full 
-##                0              205                0                0 
+##                0              200                0                0 
 ##             load       saturation        avg_speed            error 
-##                0              205             2918                0</code></pre>
+##                0              200             2917                0</code></pre>
 <p>So we are missing descriptions, which shouldn’t be too bad, since the name should be captured. We’re missing a lot of values for speed, speed and saturation/description. We will later see that this is because only the highways have spedometers, and the saturation levels are only calculated for city roads. It is not too troubling, except for later when we look at correlations. We’ll keep it in mind for the later excercises.</p>
 </div>
 <div id="distributions" class="section level2">
@@ -221,7 +283,7 @@ sapply(df, function(y) sum(is.na(y)))</code></pre>
   ggplot(aes(x=value))+
   geom_density(fill=&#39;grey&#39;)+
   facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>Key things to note here are the crazy outliers we have in cars per hour for some areas, and our other data. Perhaps these are a function of the road type? Let’s have a look.</p>
 <pre class="r"><code>df %&gt;% 
   select(1,3, 7:11) %&gt;% 
@@ -229,7 +291,7 @@ sapply(df, function(y) sum(is.na(y)))</code></pre>
   ggplot(aes(x=value,  group=tipo_elem, fill=tipo_elem))+
   geom_density(alpha=0.8)+
   facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>A first thing to note here is that the speed data is only available on the highway, whereas we find the saturation levels only on city roads. A quick check with our source documentation confirms this to be the case. However, It turns out it’s a bit hard to see this due to all the outliers tampering with our tails in the distribution. Let’s get rid of these first, and then recreate the graphs from above. To do this quickly, we use the <code>outliers</code> package.</p>
 <pre class="r"><code>df2 &lt;- df
 df2[,7:11] &lt;- df[,7:11] %&gt;% 
@@ -241,26 +303,28 @@ df2 %&gt;%
   ggplot(aes(x=value,  group=tipo_elem, fill=tipo_elem))+
   geom_density(alpha=0.8)+
   facet_wrap(~variable, scales = &#39;free&#39;)</code></pre>
-<pre><code>## Warning: Removed 3126 rows containing non-finite values (stat_density).</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre><code>## Warning: Removed 3119 rows containing non-finite values (stat_density).</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <p>There we go. A lot more informative. One key thing to notice immediately is that our city roads have much fewer cars per hour than our highways: which makes a lot of sense. We also see that they aren’t used quite as heavily as the highway.</p>
 <p>I think we’ve done about all we can with the distributions. Let’s have a look at the correlations in our data.</p>
 </div>
 <div id="correlations" class="section level2">
 <h2><span class="header-section-number">3.3</span> Correlations</h2>
 <p>Let’s have a quick look at the correlations of the variables. Since two variables overlap, we’ll make two charts.</p>
-<pre class="r"><code>df %&gt;% 
+<pre class="r"><code>#City Roads
+df %&gt;% 
   filter(tipo_elem == &#39;City Roads&#39;) %&gt;% 
   select(7:10) %&gt;% 
   cor(use=&#39;complete&#39;) %&gt;% 
-  corrplot(&#39;square&#39;, main=&#39;City Roads&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<pre class="r"><code>df %&gt;% 
+  corrplot(&#39;square&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>#Highway
+df %&gt;% 
   filter(tipo_elem == &#39;Highway&#39;) %&gt;% 
   select(7:11, -10) %&gt;% 
   cor(use=&#39;complete&#39;) %&gt;% 
-  corrplot(&#39;square&#39;, main=&#39;Highway&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
+  corrplot(&#39;square&#39;)</code></pre>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
 <p>Our main conclusions here:</p>
 <p>*Saturation and load are positively correlated with cars per hour. This makes sense, as these all measure how busy a given road is.</p>
 <p>*On highways, number of cars by the control point are also positively correlated with these. So is the average speed. This would suggest that as there’s more traffic passing per hour, the average speed tends to be higher. (Although I’m sure that during traffic jams, this would look differently.)</p>
@@ -277,7 +341,7 @@ df2 %&gt;%
 head(speed@data)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1320","8":"3","9":"20","10":"NA","11":"76","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"3660","8":"16","9":"57","10":"NA","11":"44","12":"N"},{"1":"PM41453","2":"3384","3":"Highway","4":"6823","5":"PM41453","6":"NA","7":"3120","8":"12","9":"67","10":"NA","11":"-1","12":"N"},{"1":"PM31263","2":"432","3":"Highway","4":"3839","5":"PM31263","6":"NA","7":"2340","8":"9","9":"52","10":"NA","11":"89","12":"N"},{"1":"PM31264","2":"3341","3":"Highway","4":"6777","5":"PM31264","6":"NA","7":"1200","8":"10","9":"53","10":"NA","11":"71","12":"N"},{"1":"PM30461","2":"430","3":"Highway","4":"3837","5":"PM30461","6":"NA","7":"5220","8":"12","9":"58","10":"NA","11":"77","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"PM30901","2":"195","3":"Highway","4":"3600","5":"PM30901","6":"NA","7":"1020","8":"2","9":"15","10":"NA","11":"80","12":"N"},{"1":"PM41451","2":"299","3":"Highway","4":"3705","5":"PM41451","6":"NA","7":"2580","8":"13","9":"43","10":"NA","11":"45","12":"N"},{"1":"PM31263","2":"432","3":"Highway","4":"3839","5":"PM31263","6":"NA","7":"2040","8":"8","9":"45","10":"NA","11":"84","12":"N"},{"1":"PM31264","2":"3341","3":"Highway","4":"6777","5":"PM31264","6":"NA","7":"480","8":"5","9":"23","10":"NA","11":"63","12":"N"},{"1":"PM30461","2":"430","3":"Highway","4":"3837","5":"PM30461","6":"NA","7":"4020","8":"8","9":"45","10":"NA","11":"78","12":"N"},{"1":"PM10001","2":"3205","3":"Highway","4":"6639","5":"PM10001","6":"NA","7":"5640","8":"16","9":"79","10":"NA","11":"65","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>#Download a simpler map so it&#39;s easier to see for colourblind me. 
@@ -290,7 +354,7 @@ tm_shape(madrid.spd)+
   tm_dots(col = &#39;avg_speed&#39;, palette= rev(pal),size = 0.2) + 
   tm_scale_bar() +
   tm_style_natural()</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 </div>
 <div id="congestion" class="section level2">
 <h2><span class="header-section-number">4.2</span> Congestion</h2>
@@ -299,7 +363,7 @@ tm_shape(madrid.spd)+
 head(saturation@data)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"22","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"420","8":"2","9":"32","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"580","8":"27","9":"60","10":"940","11":"NA","12":"N"},{"1":"45021","2":"2534","3":"City Roads","4":"5967","5":"Pl. Alsacia - Malmoe-Hermanos Garc\\xeda Noblejas","6":"Pl. Alsacia - Malmoe-Hermanos García Noblejas","7":"2560","8":"17","9":"50","10":"4300","11":"NA","12":"N"},{"1":"45049","2":"2560","3":"City Roads","4":"5993","5":"Pl. Alsacia - Fuente Carrantona-Malmoe","6":"Pl. Alsacia - Fuente Carrantona-Malmoe","7":"20","8":"1","9":"11","10":"100","11":"NA","12":"N"},{"1":"59017","2":"2938","3":"City Roads","4":"6371","5":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y Garc\\xeda","6":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y García","7":"360","8":"5","9":"34","10":"850","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["cod_cent"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["gid"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["tipo_elem"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["idelem"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["nombre"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["descripcion"],"name":[6],"type":["chr"],"align":["left"]},{"label":["cars_hour"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["control_pnt_full"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["load"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["saturation"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["avg_speed"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["error"],"name":[12],"type":["chr"],"align":["left"]}],"data":[{"1":"14037","2":"829","3":"City Roads","4":"4237","5":"Moratines O-E - Martin Vargas-Embajadores","6":"Moratines O-E - Martin Vargas-Embajadores","7":"100","8":"3","9":"30","10":"350","11":"NA","12":"N"},{"1":"61090","2":"2165","3":"City Roads","4":"5597","5":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","6":"Alfonso XIII O-E - Paraguay-Ricardo Calvo","7":"240","8":"1","9":"19","10":"1350","11":"NA","12":"N"},{"1":"61120","2":"2154","3":"City Roads","4":"5586","5":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.Jos\\xe9 M\\xaa Soler","6":"Acceso M-30 N-E(Superficie) - M-30 Norte-Pl.José Mª Soler","7":"360","8":"4","9":"42","10":"940","11":"NA","12":"N"},{"1":"45021","2":"2534","3":"City Roads","4":"5967","5":"Pl. Alsacia - Malmoe-Hermanos Garc\\xeda Noblejas","6":"Pl. Alsacia - Malmoe-Hermanos García Noblejas","7":"1400","8":"7","9":"35","10":"4300","11":"NA","12":"N"},{"1":"59017","2":"2938","3":"City Roads","4":"6371","5":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y Garc\\xeda","6":"C/. Salvador de Madariaga - Esteban Mora-Verdaguer y García","7":"320","8":"5","9":"36","10":"850","11":"NA","12":"N"},{"1":"59021","2":"2942","3":"City Roads","4":"6375","5":"Av. Badajoz - Arist\\xf3teles-Torrelaguna","6":"Av. Badajoz - Aristóteles-Torrelaguna","7":"280","8":"6","9":"35","10":"850","11":"NA","12":"N"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code>#Download a simpler map so it&#39;s easier to see for colourblind me. 
@@ -311,7 +375,7 @@ tm_shape(madrid.sat)+
   tm_dots(col = &#39;saturation&#39;, palette=pal, size = 0.1) +
   tm_scale_bar()+
   tm_style_natural()</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 </div>
 </div>
 <div id="extension" class="section level1">
@@ -324,11 +388,11 @@ tm_shape(madrid.sat)+
 traffic_feb &lt;- fread(&quot;~/Documents/R/Madrid - Traffic/02-2017.csv&quot;, sep = &#39;;&#39;)</code></pre>
 <pre><code>## 
 Read 0.0% of 8823517 rows
-Read 21.3% of 8823517 rows
-Read 43.9% of 8823517 rows
-Read 64.6% of 8823517 rows
-Read 84.3% of 8823517 rows
-Read 8823517 rows and 10 (of 10) columns from 0.638 GB file in 00:00:08</code></pre>
+Read 22.6% of 8823517 rows
+Read 45.1% of 8823517 rows
+Read 68.1% of 8823517 rows
+Read 91.0% of 8823517 rows
+Read 8823517 rows and 10 (of 10) columns from 0.638 GB file in 00:00:07</code></pre>
 <pre class="r"><code>#Quick Peak
 glimpse(traffic_feb)</code></pre>
 <pre><code>## Observations: 8,823,517
@@ -359,7 +423,7 @@ rm(traffic_feb)</code></pre>
   filter(vmed &gt; 0) %&gt;% 
   ggplot(aes(fecha, vmed, group=identif)) +
   geom_line(alpha=0.09)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <p>Main conclusion number one: it’s difficult to draw conclusions when there’s this many observations. We do, however, clearly see when it’s rush hour. Does this make sense? It was on a Friday. So Yes! That also explains why we see people leaving work from around 14:00.</p>
 <p>Let’s delve into this a bit more by aggregating our data to city roads and the highway.</p>
 <pre class="r"><code>bday %&gt;% 
@@ -374,17 +438,18 @@ rm(traffic_feb)</code></pre>
   ggplot(aes(x=fecha, y=value, group=tipo_elem, col=tipo_elem)) +
   geom_line() +
   facet_grid(variable~., scales = &#39;free_y&#39;)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 <p>As such it seems to be that when we average things out, there are similar patterns to be found here as in the real-time data. There are fewer overall cars per hour, put road usage is very similar, if not higher in urban settings.</p>
 <p>Just as a quick curiosity: I wonder what’s the highest average speed recorded this day. 115 KmH. Not bad!</p>
 </div>
 <div id="plotting-average-speed-over-time" class="section level2">
 <h2><span class="header-section-number">5.3</span> Plotting Average Speed over Time</h2>
-<p><code>Warning: This section involves some heavy data cleaning</code> Now, after reading the documentation and seeing the <code>animation_tmap()</code> function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though.</p>
+<p><code>Warning: This section involves some heavy data cleaning</code> Now, after reading the documentation and seeing the <code>animation_tmap()</code> function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though. Sadly, thusfar I haven’t been able to get any animations going, and in order to accomodate panel data, I was not able to use the <code>tmap</code> package, but had to switch to <code>spacetime</code>. The results are seen below. (Also, yes. I needed to find the most common occuring element, so I had to create a mode function.)</p>
 <pre class="r"><code>Mode &lt;- function(x) {
   ux &lt;- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
 }
+
 bday.hr &lt;- bday %&gt;% 
   mutate(hour = floor_date((fecha), &#39;hour&#39;)) %&gt;%
   group_by(idelem, hour) %&gt;% 
@@ -413,13 +478,13 @@ id.df %&gt;%
   ggplot(aes(ID, N)) +
   geom_histogram(stat=&#39;identity&#39;)</code></pre>
 <pre><code>## Warning: Ignoring unknown parameters: binwidth, bins, pad</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <pre class="r"><code>#So it seems like we have quite a few missing. Let&#39;s clean this out.
 #Most have an occurance of:
-median(id.df$N)</code></pre>
+Mode(id.df$N)</code></pre>
 <pre><code>## [1] 24</code></pre>
 <pre class="r"><code>#Let&#39;s remove all those that aren&#39;t at this level. 
-remove.id &lt;- id.df %&gt;% filter(N!= median(id.df$N))
+remove.id &lt;- id.df %&gt;% filter(N!= Mode(id.df$N))
 measured.points.red &lt;- subset(measured.points.red, !(idelem %in% remove.id$ID))
 bday.hr.red &lt;- bday.hr %&gt;%  filter(!(idelem %in% remove.id$ID))
 
@@ -462,7 +527,7 @@ class(bday.hr.stidf) #success!</code></pre>
 <pre class="r"><code>#Speedplot
 speed.stidf &lt;- subset(bday.hr.stidf, bday.hr.stidf@data$avg_speed&gt;0)
 stplot(speed.stidf[,,&#39;avg_speed&#39;], number=24, alpha=0.7, cex=0.4)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-13-2.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-16-2.png" width="672" /></p>
 </div>
 <div id="road-use-over-time" class="section level2">
 <h2><span class="header-section-number">5.4</span> Road use over time</h2>
@@ -470,7 +535,7 @@ stplot(speed.stidf[,,&#39;avg_speed&#39;], number=24, alpha=0.7, cex=0.4)</code>
 <pre class="r"><code>#Road Use
 road_use.stidf &lt;- subset(bday.hr.stidf, hour(bday.hr.stidf@time)&gt;6)
 stplot(road_use.stidf[,,&#39;road_use&#39;], alpha=1, cex=0.25, number=17)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 </div>
 <div id="cars-per-hour" class="section level2">
 <h2><span class="header-section-number">5.5</span> Cars per Hour</h2>
@@ -482,11 +547,11 @@ cars_hour.highway.stidf &lt;- subset(bday.hr.stidf,
 
 #This plot comes out nicely.
 stplot(cars_hour.highway.stidf[,,&#39;cars_hour&#39;], alpha=1, cex=0.25, number=24)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <pre class="r"><code>#However, for the city one we will have to take a log to scale it. 
 cars_hour.city.stidf@data$cars_hour &lt;- (cars_hour.city.stidf@data$cars_hour+1) %&gt;% log
 stplot(cars_hour.city.stidf[,,&#39;cars_hour&#39;], alpha=1, cex=0.25, number=24)</code></pre>
-<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-15-2.png" width="672" /></p>
+<p><img src="/portfolio/traffic_files/figure-html/unnamed-chunk-18-2.png" width="672" /></p>
 <p>And that’s all for now! :-)</p>
 </div>
 </div>

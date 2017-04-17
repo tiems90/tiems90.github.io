@@ -9,15 +9,13 @@ output:
     number_sections: true
     df_print: paged
 description: "This workbook is mostly concerned with cleaning and analysing both real-time and historic traffic data in Madrid." 
-    
 ---
 
 #Load Data
 Let's start with some open, real-time, Madrid traffic data!
 First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on `datos.madrid.es`. The measured points are a bit further hidden away on the website. But can be accessed [here](http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD), and downloaded as a zip file. 
 
-```{r loading data, include=FALSE}
-
+```{r loading data, results='hide'}
 #Data Loading
 library(XML)
 library(sp)
@@ -39,15 +37,13 @@ library(tmap)
 library(tmaptools)
 
 #Load Data
-setwd("~/Documents/R/Madrid - Traffic")
 traffic0 <- xmlToDataFrame('http://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml') 
 head(traffic0)
-measured.points <- readOGR("puntos_medida_trafico_2014_01_23", 'pmed_trafico')
+measured.points <- readOGR(dsn = path.expand("~/Documents/R/Git/data/data_madrid"), 'pmed_trafico')
 
 #Set Parameters
 proj <- '+proj=utm +zone=30 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs'
 pal <- get_brewer_pal('YlOrRd', 5)
-
 ```
 
 #Data Cleaning
@@ -61,21 +57,21 @@ Now that we have loaded our packages and data, we find something interesting. Th
 proj4string(measured.points) <- proj
 
 madrid <- read_osm(measured.points, type = 'maptoolkit-topo')
-
 tm_shape(madrid)+
   tm_raster()+
   tm_shape(measured.points)+
   tm_dots(col = 'blue')+
   tm_scale_bar()+
-  tm_style_natural()
+  tm_style_natural() +
+  tm_layout(title = 'Measured Points')
 ```
 
 ##Data Cleaning
 Some weird things are still in our data. These will need to be looked at before we do anything else. 
 A few histograms already show us that some of the data is encoded as negative. They do not provide an explanation of this in the data, but it seems to occurr when we receive an error message. Therefore we will remove the sensors providing an error message. 
 
+Let's start by renaming the columns so they make more sense and see what it looks like after we do that. 
 ```{r}
-#Rename columns so they make more intuitive sense
 traffic <- traffic0 %>% 
   mutate(
     cars_hour = as.numeric(intensidad),
@@ -88,19 +84,30 @@ traffic <- traffic0 %>%
 
 #Quick look at the data
 head(traffic)
+```
 
-#Below 0 values. Something is off.
+Here I spotted something strange. Cars/Hour takes a negative value at times. Let's explore this a bit further in a plot. 
+
+```{r, echo=FALSE}
+#Values below 0
 hist(traffic$cars_hour, right = F, main = 'Values Below Zero')
+```
 
+It looks like we have quite a few of these. After looking around in the data it seems these errors occur in the instances that there is an error in the machine. So let's remove all the sensors who are giving error messages. 
+
+``` {r}
 #Remove non-functioning sensors. 
 traffic <- traffic[!traffic$error=='0 0 0 0 0 0 0 0' &
                    !traffic$error=='S',]
+```
 
+And let's see if that fixed our problem!
+```{r, echo=FALSE}
 #After accounting for the erros in sensors, we no longer find any. 
 hist(traffic$cars_hour, right = F, main = 'Values Below Zero')
 ```
 
-The documentation also metions that in our measuring points data, there is a factor that indicates urban or interurban positions. Let's update these factorlabels. 
+The documentation also metions that in our measuring points data, there is a factor that indicates urban or interurban positions. Let's update these factor labels. 
 
 ```{r}
 #current labels
@@ -181,17 +188,19 @@ I think we've done about all we can with the distributions. Let's have a look at
 Let's have a quick look at the correlations of the variables. 
 Since two variables overlap, we'll make two charts. 
 ```{r}
+#City Roads
 df %>% 
   filter(tipo_elem == 'City Roads') %>% 
   select(7:10) %>% 
   cor(use='complete') %>% 
-  corrplot('square', main='City Roads')
+  corrplot('square')
 
+#Highway
 df %>% 
   filter(tipo_elem == 'Highway') %>% 
   select(7:11, -10) %>% 
   cor(use='complete') %>% 
-  corrplot('square', main='Highway')
+  corrplot('square')
 ```
 
 Our main conclusions here:
@@ -304,13 +313,14 @@ Just as a quick curiosity: I wonder what's the highest average speed recorded th
 
 ##Plotting Average Speed over Time
 `Warning: This section involves some heavy data cleaning`
-Now, after reading the documentation and seeing the `animation_tmap()` function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though.
+Now, after reading the documentation and seeing the `animation_tmap()` function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though. Sadly, thusfar I haven't been able to get any animations going, and in order to accomodate panel data, I was not able to use the `tmap` package, but had to switch to `spacetime`. The results are seen below. (Also, yes. I needed to find the most common occuring element, so I had to create a mode function.)
 
 ```{r}
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
 }
+
 bday.hr <- bday %>% 
   mutate(hour = floor_date((fecha), 'hour')) %>%
   group_by(idelem, hour) %>% 
@@ -340,9 +350,9 @@ id.df %>%
 
 #So it seems like we have quite a few missing. Let's clean this out.
 #Most have an occurance of:
-median(id.df$N)
+Mode(id.df$N)
 #Let's remove all those that aren't at this level. 
-remove.id <- id.df %>% filter(N!= median(id.df$N))
+remove.id <- id.df %>% filter(N!= Mode(id.df$N))
 measured.points.red <- subset(measured.points.red, !(idelem %in% remove.id$ID))
 bday.hr.red <- bday.hr %>%  filter(!(idelem %in% remove.id$ID))
 
