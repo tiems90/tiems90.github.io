@@ -24,7 +24,7 @@ library(tidyverse)
 #Loading and Cleaning
 First we load this data:
 
-```{r Load Data}
+```{r Load Data, cache=TRUE}
 url <- "http://datos.madrid.es/egob/catalogo/207118-0-censo%20animales.xlsx"
 destfile <- "x.xlsx"
 download.file(url, destfile)
@@ -79,6 +79,7 @@ padron
 
 padron$total <- rowSums(padron[,9:12], na.rm = T)
 padron$weight <- padron$COD_EDAD_INT*padron$total
+padron[padron$DESC_DISTRITO=="SAN BLAS-CANILLEJAS", 'DESC_DISTRITO'] <- 'SAN BLAS'
 ```
 
 Okay, it seems like we have this data per district, neighbourhoor, and age. Let's aggregate this a bit more.
@@ -114,12 +115,9 @@ join <- district %>%
   stringdist_full_join(pets, by=c(district = 'DISTRITO'))
 ```
 
-This seems to have taken care of the fuzzy merge. But San Blas is being difficult. We will fix this manually. 
+This seems to have taken care of the fuzzy merge. But San Blas is being difficult. We will fix this manually above.
 
 ```{r}
-join[21, 9:12] <- join[22, 9:12]
-join <- join[-22, names(join)!= 'DISTRITO']
-
 join$ratio_imm <- join$foreign/join$spanish
 ```
 
@@ -137,5 +135,74 @@ lm2 <- lm(ratio ~ ratio_imm + avg_age, data = join[,-c(1, 10, 9)])
 summary(lm2)
 ```
 
-And with immigration statistics this remains unclear. 
+##Old Ladies and Cats
+Now for the ultimate test! Is there a correlation between Old Ladies and Number of cats?
+First, let's define old ladies as women over 60. How many does each district have?
+(And let's adjust by finding the ratio of old ladies in each district)
 
+```{r}
+inhabitants <- padron %>% 
+  group_by(district = DESC_DISTRITO) %>% 
+  summarise(
+    total = sum(total, na.rm=T)
+  )
+
+inhabitants
+
+old_ladies <- padron %>% 
+  group_by(district = DESC_DISTRITO) %>% 
+  filter(COD_EDAD_INT >= 60) %>% 
+  summarise(
+    old_spanish_ladies = sum(EspanolesMujeres, na.rm=T),
+    old_foreign_ladies = sum(ExtranjerosMujeres, na.rm=T),
+    old_ladies = sum(EspanolesMujeres, na.rm=T)+sum(ExtranjerosMujeres, na.rm=T)
+  )
+
+old_ladies
+
+df_old_ladies <- inner_join(inhabitants, old_ladies)
+
+df_old_ladies <- df_old_ladies %>% 
+  mutate(
+    rat_old_ladies = old_ladies/total,
+    rat_old_for    = old_foreign_ladies/total,
+    rat_old_span   = old_spanish_ladies/total
+  ) %>% 
+  select(district, rat_old_ladies, rat_old_for, rat_old_span)
+```
+
+There! Now that we have that, we can merge it with our cat data!
+
+```{r}
+old_lady_cats <- df_old_ladies %>% 
+  stringdist_full_join(pets, by=c(district = 'DISTRITO'))
+
+old_lady_cats
+```
+
+Finally! And now the final question... Is there a significant relationship?
+
+```{r}
+lm3 <- lm(ratio ~ rat_old_span, data=old_lady_cats)
+summary(lm3)
+```
+
+So with Spanish old ladies it's not significant, but the coefficient is in the direction we'd expect!
+
+How about foreign old ladies?
+
+```{r}
+lm4 <- lm(ratio ~ rat_old_for, data=old_lady_cats)
+summary(lm4)
+```
+
+Looks like there's simply not enough to draw any conclusions. 
+Let's just look at old ladies overall!
+
+```{r}
+lm5 <- lm(ratio ~ rat_old_ladies, data=old_lady_cats)
+summary(lm5)
+```
+
+Sadly, still nothing. 
+That's it for now. Ratio's aren't ideal, of course, but without more demographic data I think I'm done here for now. 

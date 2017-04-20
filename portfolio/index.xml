@@ -26,8 +26,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/portfolio/pets/</guid>
-      <description>1 Intro 2 Loading and Cleaning 3 Cats vs Dogs 4 Demographic Data   1 Intro Let’s try and get some information on pets in Madrid! Fortunately, they have information freely available on datos.madrid.es. This will only be a short analysis and we will try to see if we can find some basic patterns in the data. Let’s start by loading our libraries.
- 2 Loading and Cleaning First we load this data:</description>
+      <description>1 Intro 2 Loading and Cleaning 3 Cats vs Dogs 4 Demographic Data 4.1 Old Ladies and Cats    1 Intro Let’s try and get some information on pets in Madrid! Fortunately, they have information freely available on datos.madrid.es. This will only be a short analysis and we will try to see if we can find some basic patterns in the data. Let’s start by loading our libraries.</description>
     </item>
     
     <item>
