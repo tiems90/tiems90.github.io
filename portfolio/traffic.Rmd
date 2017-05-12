@@ -15,7 +15,7 @@ description: "This workbook is mostly concerned with cleaning and analysing both
 Let's start with some open, real-time, Madrid traffic data!
 First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on `datos.madrid.es`. The measured points are a bit further hidden away on the website. But can be accessed [here](http://datos.madrid.es/portal/site/egob/menuitem.c05c1f754a33a9fbe4b2e4b284f1a5a0/?vgnextoid=ee941ce6ba6d3410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD), and downloaded as a zip file. 
 
-```{r loading data, results='hide',message=FALSE, warning=FALSE, cache=TRUE}
+```{r loading data, results='hide',message=FALSE, warning=FALSE}
 #Data Loading
 library(XML)
 library(sp)
@@ -35,6 +35,8 @@ library(dtplyr)
 library(rgdal)
 library(tmap)
 library(tmaptools)
+library(leaflet)
+library(OpenStreetMap)
 
 #Load Data
 traffic0 <- xmlToDataFrame('http://datos.madrid.es/egob/catalogo/202087-0-trafico-intensidad.xml') 
@@ -63,9 +65,22 @@ tm_shape(madrid)+
   tm_dots(col = 'blue')+
   tm_scale_bar()+
   tm_style_natural() +
-  tm_layout(title = 'Measured Points')
+  tm_layout(title = 'Measured Points in tmap')
 ```
 
+However, to visualise this using a leaflet interactive plot we need to a different projection, namely `EPSG:4326`. 
+
+```{r}
+measured.points %>% 
+  spTransform(CRS("+init=epsg:4326")) %>% 
+  leaflet() %>% 
+  addTiles() %>% 
+  addPolygons(color = 'black',
+              fill = 0.6,
+              popup=measured.points$nombre)
+```
+
+  
 ##Data Cleaning
 Some weird things are still in our data. These will need to be looked at before we do anything else. 
 A few histograms already show us that some of the data is encoded as negative. They do not provide an explanation of this in the data, but it seems to occurr when we receive an error message. Therefore we will remove the sensors providing an error message. 
@@ -119,6 +134,7 @@ levels(measured.points@data$tipo_elem) <- c('Highway', 'City Roads')
 
 
 ##Merging
+
 Now that we have our plotted data and the live data from Madrid, we can merge the two together into one SP dataframe.
 The documentation, `PUNTOS MEDIDA TRAFICO_MADRID.pdf`, indicates that in our `traffic` the column `codigo` should coincide with `COD_CENT` in our georeferenced set. We can use this as a key to merge the two. 
 
@@ -130,15 +146,19 @@ head(traffic.full@data)
 ```
 
 #Exploratory Data Analysis
+
 Let's have a look at our data now. Just to get a better idea of what we're working with. 
 To make things easer on ourselves later, I only consider the cleaned data that merges well. 
 
 ##Missing Data
+
 Let's see how many missing values we have. 
+
 ```{r}
 df <- as.tbl(traffic.full@data)
 sapply(df, function(y) sum(is.na(y)))
 ```
+
 So we are missing descriptions, which shouldn't be too bad, since the name should be captured. We're missing a lot of values for speed, speed and saturation/description. We will later see that this is because only the highways have spedometers, and the saturation levels are only calculated for city roads. It is not too troubling, except for later when we look at correlations. We'll keep it in mind for the later excercises. 
 
 ##Distributions
@@ -185,6 +205,7 @@ There we go. A lot more informative. One key thing to notice immediately is that
 I think we've done about all we can with the distributions. Let's have a look at the correlations in our data. 
 
 ##Correlations
+
 Let's have a quick look at the correlations of the variables. 
 Since two variables overlap, we'll make two charts. 
 ```{r}
@@ -209,13 +230,15 @@ Our main conclusions here:
 * On highways, number of cars by the control point are also positively correlated with these. So is the average speed. This would suggest that as there's more traffic passing per hour, the average speed tends to be higher. (Although I'm sure that during traffic jams, this would look differently.)
 * On city roads, it all tends to be a bit less strongly correlated. The exception being the load and cars at the control points. Strangly, Saturation appears to be slightly negatively correlated with load and control points being full. This is against expactations. 
 
-#Maps
+#Maps{.tabset}
+
 Now that we have joined, cleaned, and briefly analysed our data we can start looking at more interesting plots.
 Let's start by finding out speedy roads. 
 
 ##Speed
 
 We subset our dataset to the points we have speed data on and recreate our map. 
+
 ```{r}
 speed <- subset(traffic.full, !is.na(avg_speed))
 head(speed@data)
@@ -231,6 +254,33 @@ tm_shape(madrid.spd)+
   tm_scale_bar() +
   tm_style_natural()
 ```
+
+And now we can have a look at making a leaflet version of the same graph!
+
+```{r}
+pal_leaflet <- colorNumeric(
+  palette = "inferno",
+  domain = (speed$avg_speed))
+
+popup <- paste(sep="","<b>", speed$nombre,"</b>",
+                             "<br/>","<strong>","Average Speed: ","</strong>" ,speed$avg_speed, 'kmh',
+                             "<br/>","<strong>","Cars per Hour: ","</strong>" ,speed$cars_hour)
+
+speed %>% 
+  spTransform(CRS("+init=epsg:4326")) %>% 
+  leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(color = ~pal_leaflet(avg_speed),
+              opacity = 1.0,
+              fillOpacity = 0.5,
+              popup=popup) %>%
+  addLegend("bottomright", pal = pal_leaflet, values = ~avg_speed,
+    title = "Average Speed",
+    labFormat = labelFormat(suffix = " KMH"),
+    opacity = 1
+  )
+```
+
 
 ##Congestion
 Let's have a similar look at the most congested roads!
@@ -250,161 +300,31 @@ tm_shape(madrid.sat)+
   tm_style_natural()
 ```
 
-#Extension
-
-Now let's timeset this data. The [documentation](http://datos.madrid.es/FWProjects/egob/contenidos/datasets/ficheros/Estructura%20y%20contenido%20del%20fichero%20csv.pdf) specifies how to treat this data. First of all, since we'll be working with a dataset that is about 700 MB large, I'll be loading up the data.table package and working with that so we can use `fread()`. 
-
-##Load the data
-Now I would like to extend this with historic data. To save my computer I will only use one month's worth of data, February 2017. `Actually, this is hurting my Laptop substantially, so I will be looking at my birthday only.`
-
-```{r Load Big Dataset, cache=TRUE}
-#Load data
-traffic_feb <- fread("~/Documents/R/Madrid - Traffic/02-2017.csv", sep = ';')
-
-#Quick Peak
-glimpse(traffic_feb)
-
-#Recode our time data. 
-traffic_feb$fecha <- ymd_hms(traffic_feb$fecha)
-
-bday <- traffic_feb %>% 
-  filter(day(fecha)==17)
-
-rm(traffic_feb)
-```
-
-##Quick Visual Analysis
-Now, the added benefit of having this data as a time series is that we can look at figures over time. Let's look at traffic data over time. 
+And to create it in leaflet...
 
 ```{r}
-bday %>%
-  select(fecha, tipo_elem, identif, vmed) %>% 
-  filter(vmed > 0) %>% 
-  ggplot(aes(fecha, vmed, group=identif)) +
-  geom_line(alpha=0.09)
-```
+pal_leaflet <- colorNumeric(
+  palette = "inferno",
+  domain = saturation$saturation,
+  reverse = T)
 
-Main conclusion number one: it's difficult to draw conclusions when there's this many observations. We do, however, clearly see when it's rush hour. Does this make sense? It was on a `r weekdays(dmy(17022017))`. So Yes! That also explains why we see people leaving work from around 14:00. 
+popup <- paste(sep="","<b>", saturation$nombre,"</b>",
+                             "<br/>","<strong>","Saturation: ","</strong>" ,saturation$saturation,
+                             "<br/>","<strong>","Cars per Hour: ","</strong>" ,saturation$cars_hour)
 
-Let's delve into this a bit more by aggregating our data to city roads and the highway. 
-
-```{r warning=FALSE}
-
-
-bday %>% 
-  group_by(fecha, tipo_elem) %>% 
-  summarise(
-    cars_hour = mean(intensidad),
-    road_use = mean(carga),
-    avg_speed = mean(vmed),
-    errors = sum(error!='N') #It appears there's no faulty machinery on this day. Hurrah!
-  ) %>% 
-  melt(c('fecha', 'tipo_elem')) %>% 
-  ggplot(aes(x=fecha, y=value, group=tipo_elem, col=tipo_elem)) +
-  geom_line() +
-  facet_grid(variable~., scales = 'free_y')
-```
-
-As such it seems to be that when we average things out, there are similar patterns to be found here as in the real-time data. There are fewer overall cars per hour, put road usage is very similar, if not higher in urban settings. 
-
-Just as a quick curiosity: I wonder what's the highest average speed recorded this day. `r max(bday$vmed)` KmH. Not bad!
-
-##Plotting Average Speed over Time
-`Warning: This section involves some heavy data cleaning`
-
-Now, after reading the documentation and seeing the `animation_tmap()` function, this sounds like something interesting to do! In order to keep my computer alive I will average by the hour though. Sadly, thusfar I haven't been able to get any animations going, and in order to accomodate panel data, I was not able to use the `tmap` package, but had to switch to `spacetime`. The results are seen below. (Also, yes. I needed to find the most common occuring element, so I had to create a mode function.)
-
-```{r}
-Mode <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
-
-bday.hr <- bday %>% 
-  mutate(hour = floor_date((fecha), 'hour')) %>%
-  group_by(idelem, hour) %>% 
-  summarise(
-    cars_hour = mean(intensidad),
-    road_use = mean(carga),
-    avg_speed = mean(vmed),
-    type = Mode(tipo_elem)
+saturation %>% 
+  spTransform(CRS("+init=epsg:4326")) %>% 
+  leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(color = ~pal_leaflet(saturation),
+              opacity = 1.0,
+              fillOpacity = 0.5,
+              popup=popup) %>%
+  addLegend("bottomright", pal = pal_leaflet, values = ~(saturation),
+    title = "Saturation",
+    opacity = 1
   )
-
-#First we need to subset our SP object.
-measured.points.red <- subset(measured.points, idelem %in% bday.hr$idelem)
-
-#It's not NA data. 
-sapply(bday.hr, function(y) sum(is.na(y)))
-
-ids <- unique(bday.hr$idelem)
-id.occurance <- 0
-for (i in 1:length(ids)){
-  id.occurance[i] <- sum(bday.hr$idelem==ids[i])
-}
-
-id.df <- data.frame(ID= ids, N=id.occurance)
-id.df %>% 
-  ggplot(aes(ID, N)) +
-  geom_histogram(stat='identity')
-
-#So it seems like we have quite a few missing. Let's clean this out.
-#Most have an occurance of:
-Mode(id.df$N)
-#Let's remove all those that aren't at this level. 
-remove.id <- id.df %>% filter(N!= Mode(id.df$N))
-measured.points.red <- subset(measured.points.red, !(idelem %in% remove.id$ID))
-bday.hr.red <- bday.hr %>%  filter(!(idelem %in% remove.id$ID))
-
-#Let's look at our key variable. It looks like our sp data is coded as factors. 
-str(measured.points.red@data)
-str(bday.hr.red)
-
-#Shame on me for not cleaning this properly to begin with. 
-measured.points.red@data$idelem <- measured.points.red@data$idelem %>% 
-  as.character %>% 
-  as.numeric
-
-#Let's just all mash it into one DF then. 
-df.coord <- data.frame(idelem = measured.points.red$idelem, x = coordinates(measured.points.red)[,1], 
-                  y = coordinates(measured.points.red)[,2])
-
-df.bday <- merge(bday.hr.red, df.coord, by='idelem', all.x=T)
-df.bday <- df.bday[complete.cases(df.bday),]
-
-bday.hr.stidf <- stConstruct(df.bday, c("x", "y"), "hour", interval = TRUE, crs = CRS(proj))
-class(bday.hr.stidf) #success!
-
-#Speedplot
-speed.stidf <- subset(bday.hr.stidf, bday.hr.stidf@data$avg_speed>0)
-stplot(speed.stidf[,,'avg_speed'], number=24, alpha=0.7, cex=0.4)
-
-```
-
-##Road use over time
-
-Now that the hard work is over, we can simply call the functions and dataframes from the previous section. Since nighttime isn't as interesting to us, we will filter it. 
-
-```{r}
-#Road Use
-road_use.stidf <- subset(bday.hr.stidf, hour(bday.hr.stidf@time)>6)
-stplot(road_use.stidf[,,'road_use'], alpha=1, cex=0.25, number=17)
-```
-
-##Cars per Hour
-Now, for our final plot we can look at the cars per hour metric. It makes sense to split this into one for the highway and one for the inner city, so let's do this. 
-
-```{r}
-cars_hour.city.stidf <- subset(bday.hr.stidf, 
-                               bday.hr.stidf@data$type=='PUNTOS MEDIDA URBANOS')
-cars_hour.highway.stidf <- subset(bday.hr.stidf, 
-                               bday.hr.stidf@data$type!='PUNTOS MEDIDA URBANOS')
-
-#This plot comes out nicely.
-stplot(cars_hour.highway.stidf[,,'cars_hour'], alpha=1, cex=0.25, number=24)
-
-#However, for the city one we will have to take a log to scale it. 
-cars_hour.city.stidf@data$cars_hour <- (cars_hour.city.stidf@data$cars_hour+1) %>% log
-stplot(cars_hour.city.stidf[,,'cars_hour'], alpha=1, cex=0.25, number=24)
 ```
 
 And that's all for now! :-) 
+

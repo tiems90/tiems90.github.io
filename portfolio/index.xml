@@ -17,7 +17,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/portfolio/traffic/</guid>
-      <description>1 Load Data 2 Data Cleaning 2.1 Georreferencing 2.2 Data Cleaning 2.3 Merging  3 Exploratory Data Analysis 3.1 Missing Data 3.2 Distributions 3.3 Correlations  4 Maps 4.1 Speed 4.2 Congestion  5 Extension 5.1 Load the data 5.2 Quick Visual Analysis 5.3 Plotting Average Speed over Time 5.4 Road use over time 5.5 Cars per Hour    1 Load Data Let’s start with some open, real-time, Madrid traffic data!</description>
+      <description>1 Load Data 2 Data Cleaning 2.1 Georreferencing 2.2 Data Cleaning 2.3 Merging  3 Exploratory Data Analysis 3.1 Missing Data 3.2 Distributions 3.3 Correlations  4 Maps 4.1 Speed 4.2 Congestion    1 Load Data Let’s start with some open, real-time, Madrid traffic data! First we load up our packages and download our data. Our real-time data can be downloaded through the link in our code on datos.</description>
     </item>
     
     <item>
