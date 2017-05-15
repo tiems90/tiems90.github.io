@@ -1,0 +1,89 @@
+---
+title: "Volatility Modelling"
+author: "Timo"
+date: 5/15/2017
+image: 'img/portfolio/stock-market.jpg'
+output:
+  blogdown::html_page:
+    toc: true
+    number_sections: true
+    df_print: paged
+description: 'When I read about an interesting new package that combines the financial packages with the tidyverse, I figured this would be the perfect time for some basic volatility modelling.'
+---
+
+#Intro
+When I read about an interesting new package, `tidyquant`, that combines the financial packages with the tidyverse, I figured this would be the perfect time for some basic volatility modelling. I figured I would preform some basic analysis on Telefonica stock volatility to start with.
+
+#Data
+##Loading Packages
+We start by loading our packages. The `tidyquant` package loads the tidyverse as a dependecy, so it should contain all we need. For volatility modelling I opt for the `rugarch` package, which should contain everything I need. 
+
+```{r, message=FALSE, warning=FALSE}
+#Tidyverse and Quantitative Functions
+library(tidyquant) 
+
+#Volatility Modelling
+library(rugarch)
+```
+
+##Downloading Data
+
+The functionality offered by the package allows for easy downloading of stock data. Furthermore, with the pipe operator, we can immediately transform this data into daily returns. 
+
+```{r}
+TEF <- tq_get("TEF", get = "stock.prices", from = " 2010-01-01") %>% 
+  tq_transmute(adjusted, periodReturn, period = "daily", col_rename = "returns")
+
+TEF
+```
+
+##Data
+
+We start with a quick look at the data to see if we can discern some periods of higher and lower volatility. This is our first quick check to see if an ARCH-type model might make sense.
+
+```{r, message=FALSE, warning=FALSE}
+TEF %>% 
+  ggplot(aes(date,returns**2))+
+  geom_line() +
+  ggtitle('Daily Squared Returns')
+```
+
+The graph definitely shows some periods with higher volatility. For further verification, let's have a look at our ACF and PCF. 
+
+```{r}
+pacf((TEF$returns)**2)
+acf((TEF$returns)**2)
+```
+
+This definitely looks like we can fit an ARCH-type model. In fact, I will opt for a Garch(1,1) model first.
+
+#Modelling
+As mentioned above, I use the rugarch package to fit our model. First I will create the model specifications. 
+```{r}
+spec <- ugarchspec(mean.model = list(armaOrder = c(0,0)), 
+                   variance.model = list(garchOrder = c(1,1), 
+                   model = "sGARCH"), distribution.model = "norm")
+spec
+```
+
+Now we fit this model to our data.
+
+```{r}
+gfit <- ugarchfit(spec, TEF$returns)
+gfit
+plot(gfit, which = 3)
+```
+
+I see there are some problems with the X-axis labels. I will try to fix this in the future. 
+Overall, it seems to estimate it will.
+
+However, I would like to make sure it captured all the autocorrelation. To do this, I will plot the ACF and PCF of the residuals. 
+
+```{r}
+gfit@fit$residuals %>% acf
+gfit@fit$residuals %>% pacf
+```
+
+It looks like we captured the immediate effects, but we might still be missing some extra effect. I'll explore this in further detail later.
+
+I will continue to update this section. However, my initial thoughts about the tidyquant package are very positive. It's great to be able to work the functions into a pipeline and I will be sure to explore the portfolio capabilities as well in the future. 

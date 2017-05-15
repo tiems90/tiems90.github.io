@@ -49,5 +49,15 @@ Education  MSc in Specialised Economic Analysis BSc in International Business Ad
 The link to the final application can be found here. The actual R code it uses is quite simplistic.</description>
     </item>
     
+    <item>
+      <title>Volatility Modelling</title>
+      <link>/portfolio/volatility_modelling/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/portfolio/volatility_modelling/</guid>
+      <description>1 Intro 2 Data 2.1 Loading Packages 2.2 Downloading Data 2.3 Data  3 Modelling   1 Intro When I read about an interesting new package, tidyquant, that combines the financial packages with the tidyverse, I figured this would be the perfect time for some basic volatility modelling. I figured I would preform some basic analysis on Telefonica stock volatility to start with.
+ 2 Data 2.1 Loading Packages We start by loading our packages.</description>
+    </item>
+    
   </channel>
 </rss>
