@@ -275,15 +275,20 @@ gfit</code></pre>
 ## 4    50    119.45    8.149e-08
 ## 
 ## 
-## Elapsed time : 1.043017</code></pre>
+## Elapsed time : 1.121359</code></pre>
+<p>This model seems to fit our data well. For a visual inspection we can plot the volatility to the conditional SD. This will give us an idea of how well the model can identify volatile periods.</p>
 <pre class="r"><code>plot(gfit, which = 3)</code></pre>
-<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<p>I see there are some problems with the X-axis labels. I will try to fix this in the future. Overall, it seems to estimate it will.</p>
+<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>I see there are some problems with the X-axis labels. I will try to fix this in the future. Overall, it seems to estimate it well.</p>
+<p>In fact, if we plot our series while imposing 2 standard deviations, we observe the following.</p>
+<pre class="r"><code>plot(gfit, which=1)</code></pre>
+<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>This seems to capture it very well.</p>
 <p>However, I would like to make sure it captured all the autocorrelation. To do this, I will plot the ACF and PCF of the residuals.</p>
 <pre class="r"><code>gfit@fit$residuals %&gt;% acf</code></pre>
-<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <pre class="r"><code>gfit@fit$residuals %&gt;% pacf</code></pre>
-<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<p><img src="/portfolio/volatility_modelling_files/figure-html/unnamed-chunk-9-2.png" width="672" /></p>
 <p>It looks like we captured the immediate effects, but we might still be missing some extra effect. I’ll explore this in further detail later.</p>
 <p>I will continue to update this section. However, my initial thoughts about the tidyquant package are very positive. It’s great to be able to work the functions into a pipeline and I will be sure to explore the portfolio capabilities as well in the future.</p>
 </div>

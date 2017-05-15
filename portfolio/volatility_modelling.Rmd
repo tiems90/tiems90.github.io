@@ -71,11 +71,24 @@ Now we fit this model to our data.
 ```{r}
 gfit <- ugarchfit(spec, TEF$returns)
 gfit
+```
+
+This model seems to fit our data well. For a visual inspection we can plot the volatility to the conditional SD. This will give us an idea of how well the model can identify volatile periods. 
+
+```{r}
 plot(gfit, which = 3)
 ```
 
 I see there are some problems with the X-axis labels. I will try to fix this in the future. 
-Overall, it seems to estimate it will.
+Overall, it seems to estimate it well.
+
+In fact, if we plot our series while imposing 2 standard deviations, we observe the following.
+
+```{r}
+plot(gfit, which=1)
+```
+
+This seems to capture it very well.
 
 However, I would like to make sure it captured all the autocorrelation. To do this, I will plot the ACF and PCF of the residuals. 
 
