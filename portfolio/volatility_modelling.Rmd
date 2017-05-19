@@ -30,11 +30,12 @@ library(rugarch)
 
 The functionality offered by the package allows for easy downloading of stock data. Furthermore, with the pipe operator, we can immediately transform this data into daily returns. 
 
+However, as I later use the `rugarch` package for quick graphs, I also have to create an xts version of our data to ensure the x-axis shows the correct values. 
 ```{r}
 TEF <- tq_get("TEF", get = "stock.prices", from = " 2010-01-01") %>% 
   tq_transmute(adjusted, periodReturn, period = "daily", col_rename = "returns")
 
-TEF
+TEF.xts <- xts(TEF$returns, order.by = TEF$date)
 ```
 
 ##Data
@@ -62,14 +63,14 @@ As mentioned above, I use the rugarch package to fit our model. First I will cre
 ```{r}
 spec <- ugarchspec(mean.model = list(armaOrder = c(0,0)), 
                    variance.model = list(garchOrder = c(1,1), 
-                   model = "sGARCH"), distribution.model = "norm")
+                   model = "sGARCH"), distribution.model = "std")
 spec
 ```
 
 Now we fit this model to our data.
 
 ```{r}
-gfit <- ugarchfit(spec, TEF$returns)
+gfit <- ugarchfit(spec, TEF.xts)
 gfit
 ```
 
@@ -78,9 +79,6 @@ This model seems to fit our data well. For a visual inspection we can plot the v
 ```{r}
 plot(gfit, which = 3)
 ```
-
-I see there are some problems with the X-axis labels. I will try to fix this in the future. 
-Overall, it seems to estimate it well.
 
 In fact, if we plot our series while imposing 2 standard deviations, we observe the following.
 
@@ -97,6 +95,15 @@ gfit@fit$residuals %>% acf
 gfit@fit$residuals %>% pacf
 ```
 
-It looks like we captured the immediate effects, but we might still be missing some extra effect. I'll explore this in further detail later.
+And for good measure, let's include a rolling version of the model. 
+
+```{r}
+roll.fit <- ugarchroll(spec, TEF.xts, n.ahead = 1, refit.every = 22, calculate.VaR = T,
+                       n.start=500, refit.window = 'moving')
+roll.fit
+plot(roll.fit, which=4)
+```
+
 
 I will continue to update this section. However, my initial thoughts about the tidyquant package are very positive. It's great to be able to work the functions into a pipeline and I will be sure to explore the portfolio capabilities as well in the future. 
+
